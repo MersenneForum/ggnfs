@@ -1,10 +1,7 @@
 NAME=snfs
-
 clean : ;
-	rm -f cols* deps* factor.easy lpindex* rels* numFF.txt numrels.txt tmp.job *.afb.0
-	rm -f $(NAME).job $(NAME).polsel* $(NAME).fb spairs.*
-	rm -f spmat sp-index .last_spq* depinf tmpdata.000
+	rm -f cols* deps* factor.easy lpindex* rels* $(NAME).fb spairs.out numFF.txt numrels.txt tmp.job *.afb.0 depinf $(NAME).job
 
 squeaky : clean ;
-	rm -f relations.jpg xprimes.jpg
+	rm -f relations.jpg xprimes.jpg spairs.add
 

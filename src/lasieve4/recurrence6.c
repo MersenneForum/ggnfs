@@ -15,11 +15,13 @@
 
 #include <sys/types.h>
 #include <limits.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#else
+#include "asm/lasieve-asm.h"
 #include "lasieve.h"
-
-static u32_t A, A_bits;
-static i32_t ub;
+#endif
+static u32_t A, A_bits, ub;
 
 void rec_info_init(u32_t A1, u32_t ub1)
 {
@@ -45,8 +47,7 @@ void rec_info_init(u32_t A1, u32_t ub1)
 
 u32_t get_recurrence_info(u32_t * res_ptr, u32_t p, u32_t r)
 {
-  u32_t b, c;
-  i32_t s, t;
+  u32_t b, c, s, t;
 
   if (r == 0) {
 

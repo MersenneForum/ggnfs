@@ -39,17 +39,17 @@ extern int verbose;
 static double assess_bound0, assess_bound1, assess_area;
 static double *assess_optima;
 
-static unsigned int assess_primes[NSMALLPRIMES];
-static unsigned int assess_prime_bound;
+static uint assess_primes[NSMALLPRIMES];
+static int assess_prime_bound;
 static double assess_alpha_max, assess_rat;
-static unsigned int *assess_mod, *assess_root, *assess_coeffmod;
+static uint *assess_mod, *assess_root, *assess_coeffmod;
 static int assess_mod_len, assess_root_len, assess_coeffmod_len;
 
 /* ---------------------------------------------------------- */
 
-unsigned int invert(unsigned int a, unsigned int p)  /* 0<b<p */
+uint invert(uint a, uint p)  /* 0<b<p */
 {
-  unsigned int v1=0, v2=1, q, b=a, oldp=p;
+  uint v1=0, v2=1, q, b=a, oldp=p;
 
   if (a==0) complain("cannot invert 0\n");
   while (b>1) {
@@ -80,10 +80,10 @@ unsigned int invert(unsigned int a, unsigned int p)  /* 0<b<p */
 }
 
 
-void pol_mul_lin(unsigned int p, int deg, unsigned int *pol, unsigned int *modpol, unsigned int a)
+void pol_mul_lin(uint p, int deg, uint *pol, uint *modpol, uint a)
 {
   int i;
-  unsigned int coeff, pol2[7];
+  uint coeff, pol2[7];
 
   pol2[0]=0;
   for (i=0; i<=deg; i++) pol2[i+1]=pol[i];
@@ -96,10 +96,10 @@ void pol_mul_lin(unsigned int p, int deg, unsigned int *pol, unsigned int *modpo
 }
 
 
-void pol_sqr(unsigned int p, int deg, unsigned int *pol, unsigned int *modpol)
+void pol_sqr(uint p, int deg, uint *pol, uint *modpol)
 {
   int i, j;
-  unsigned int coeff, prod[12];
+  uint coeff, prod[12];
 
   for (i=0; i<=2*deg; i++) prod[i]=0;
   for (i=0; i<=deg; i++) prod[2*i]=(pol[i]*pol[i])%p;
@@ -115,10 +115,10 @@ void pol_sqr(unsigned int p, int deg, unsigned int *pol, unsigned int *modpol)
 }
 
 
-void pol_exp(unsigned int p, int deg, unsigned int *pol, unsigned int *modpol, unsigned int a, unsigned int ex)
+void pol_exp(uint p, int deg, uint *pol, uint *modpol, uint a, uint ex)
 {
   int i, n;
-  unsigned int ma, pol2[6], inv;
+  uint ma, pol2[6], inv;
 
   if (modpol[deg]!=p-1) {
     if (modpol[deg]==0) complain("pol_exp\n");
@@ -140,10 +140,10 @@ void pol_exp(unsigned int p, int deg, unsigned int *pol, unsigned int *modpol, u
 }
 
 
-int pol_gcd(unsigned int p, int deg, unsigned int *res , unsigned int *pol1, unsigned int *pol)
+int pol_gcd(uint p, int deg, uint *res , uint *pol1, uint *pol)
 {
   int i, d2, d3, diff;
-  unsigned int h, leadinv, pol2[6], pol3[6];
+  uint h, leadinv, pol2[6], pol3[6];
 
   for (i=0; i<=deg; i++) { pol2[i]=pol[i]; pol3[i]=pol1[i]; }
   d2=deg; d3=deg;
@@ -189,10 +189,10 @@ int pol_gcd(unsigned int p, int deg, unsigned int *res , unsigned int *pol1, uns
 }
 
 
-void pol_div_lin(unsigned int p, int *deg, unsigned int *coeff, unsigned int r)
+void pol_div_lin(uint p, int *deg, uint *coeff, uint r)
 {
   int i, d;
-  unsigned int h, res;
+  uint h, res;
 
   d=*deg; h=coeff[d];
   for (i=d-1; i>=0; i--) {
@@ -204,9 +204,9 @@ void pol_div_lin(unsigned int p, int *deg, unsigned int *coeff, unsigned int r)
 }
 
 
-unsigned int find_root(unsigned int p, int deg, unsigned int *coeff)
+uint find_root(uint p, int deg, uint *coeff)
 {
-  unsigned int rpol[6], rpol1[6], rpol2[6], res, inv, a, p2;
+  uint rpol[6], rpol1[6], rpol2[6], res, inv, a, p2;
   int i, rd, d;
 
   for (i=0; i<=deg; i++) rpol[i]=coeff[i];
@@ -229,7 +229,7 @@ unsigned int find_root(unsigned int p, int deg, unsigned int *coeff)
     if (rd==0) return p; /* no root */
   }
   while (rd>1) {
-    a=((unsigned int)rand())%p;
+    a=((uint)rand())%p;
     pol_exp(p,rd,rpol1,rpol,a,p2);
     if (rpol1[0]) rpol1[0]--; else rpol1[0]=p-1;
     d=pol_gcd(p,rd,rpol2,rpol1,rpol);
@@ -244,10 +244,10 @@ unsigned int find_root(unsigned int p, int deg, unsigned int *coeff)
 }
 
 
-unsigned int pol_eval(unsigned int p, int deg, unsigned int *coeff, unsigned int r)
+uint pol_eval(uint p, int deg, uint *coeff, uint r)
 {
   int i;
-  unsigned int res;
+  uint res;
 
   res=0;
   for (i=deg; i>=0; i--) { res*=r; res+=coeff[i]; res%=p; }
@@ -255,14 +255,14 @@ unsigned int pol_eval(unsigned int p, int deg, unsigned int *coeff, unsigned int
 }
 
 
-int find_pol_roots_homog(unsigned int p, int deg, unsigned int *polmod, unsigned int *roots)
+int find_pol_roots_homog(uint p, int deg, uint *polmod, uint *roots)
 {
-  unsigned int r;
+  uint r;
   int n, d, i;
 
   if (assess_mod_len<deg+1) {
     assess_mod_len=deg+1;
-    assess_mod=(unsigned int *)xrealloc(assess_mod,assess_mod_len*sizeof(unsigned int));
+    assess_mod=(uint *)xrealloc(assess_mod,assess_mod_len*sizeof(uint));
   }
   for (i=0; i<=deg; i++) assess_mod[i]=polmod[i]%p;
   d=deg; n=0; 
@@ -286,10 +286,10 @@ int find_pol_roots_homog(unsigned int p, int deg, unsigned int *polmod, unsigned
 
 #define MAX_BF      65535
 
-double brute_force(unsigned int p, int deg, mpz_t *gmp_coeff, unsigned int r)
+double brute_force(uint p, int deg, mpz_t *gmp_coeff, uint r)
 {
-  unsigned int qmax, h, q, q0;
-  unsigned int lifts[32], powers[32];
+  uint qmax, h, q, q0;
+  uint lifts[32], powers[32];
   int ind, indmax, j;
   double dp, lo, res;
 
@@ -297,7 +297,7 @@ double brute_force(unsigned int p, int deg, mpz_t *gmp_coeff, unsigned int r)
   while (qmax<MAX_BF/p) { qmax*=p; powers[indmax++]=qmax; }
   if (assess_mod_len<deg+1) {
     assess_mod_len=deg+1;
-    assess_mod=(unsigned int *)xrealloc(assess_mod,assess_mod_len*sizeof(unsigned int));
+    assess_mod=(uint *)xrealloc(assess_mod,assess_mod_len*sizeof(uint));
   }
   for (j=0; j<=deg; j++) assess_mod[j]=mpz_fdiv_ui(gmp_coeff[j],qmax);
   dp=(double)p; lo=log(dp)*dp/(dp+1);
@@ -333,10 +333,10 @@ double brute_force(unsigned int p, int deg, mpz_t *gmp_coeff, unsigned int r)
 }
 
 
-double brute_force_proj(unsigned int p, int deg, mpz_t *gmp_coeff)
+double brute_force_proj(uint p, int deg, mpz_t *gmp_coeff)
 {
-  unsigned int qmax, h, q, q0;
-  unsigned int lifts[32], powers[32];
+  uint qmax, h, q, q0;
+  uint lifts[32], powers[32];
   int ind, indmax, j;
   double dp, lo, res;
 
@@ -344,7 +344,7 @@ double brute_force_proj(unsigned int p, int deg, mpz_t *gmp_coeff)
   while (qmax<MAX_BF/p) { qmax*=p; powers[indmax++]=qmax; }
   if (assess_mod_len<deg+1) {
     assess_mod_len=deg+1;
-    assess_mod=(unsigned int *)xrealloc(assess_mod,assess_mod_len*sizeof(unsigned int));
+    assess_mod=(uint *)xrealloc(assess_mod,assess_mod_len*sizeof(uint));
   }
   for (j=0; j<=deg; j++) assess_mod[j]=mpz_fdiv_ui(gmp_coeff[deg-j],qmax);
   dp=(double)p; lo=log(dp)*dp/(dp+1);
@@ -381,30 +381,30 @@ double brute_force_proj(unsigned int p, int deg, mpz_t *gmp_coeff)
 
 /* ---------------------------------------------------------- */
 
-void compute_coeffmod(unsigned int p, int deg, mpz_t *coeff)
+void compute_coeffmod(uint p, int deg, mpz_t *coeff)
 {
   int i;
 
   if (assess_coeffmod_len<deg+1) {
     assess_coeffmod_len=deg+1;
-    assess_coeffmod=(unsigned int *)xrealloc(assess_coeffmod,assess_coeffmod_len*sizeof(unsigned int));
+    assess_coeffmod=(uint *)xrealloc(assess_coeffmod,assess_coeffmod_len*sizeof(uint));
   }
   for (i=0; i<=deg; i++) assess_coeffmod[i]=mpz_fdiv_ui(coeff[i],p);
 }
 
 
 /* returns 1 if alpha>alpha_targ */
-int compute_alpha(double *alpha, int deg, unsigned int **coeffmod, mpz_t *gmp_coeff, double alpha_targ)
+int compute_alpha(double *alpha, int deg, uint **coeffmod, mpz_t *gmp_coeff, double alpha_targ)
 {
   double al, dp;
-  unsigned int p, r;
+  uint p, r;
   int i, j, n;
   double al_prev, max_rest, rat_rest;
 
   al=0.; max_rest=assess_alpha_max; rat_rest=assess_rat;
   if (assess_root_len<deg+1) {
     assess_root_len=deg+1;
-    assess_root=(unsigned int *)xrealloc(assess_root,assess_root_len*sizeof(unsigned int));
+    assess_root=(uint *)xrealloc(assess_root,assess_root_len*sizeof(uint));
   }
   for (i=0; i<NSMALLPRIMES; i++) {
     al_prev=al;
@@ -446,17 +446,17 @@ int compute_alpha(double *alpha, int deg, unsigned int **coeffmod, mpz_t *gmp_co
 }
 
 
-void compute_alpha_exact(double *alpha, int deg, unsigned int **coeffmod, mpz_t *gmp_coeff, unsigned int pb)
+void compute_alpha_exact(double *alpha, int deg, uint **coeffmod, mpz_t *gmp_coeff, uint pb)
 {
   double al, dp;
-  unsigned int p, r;
+  uint p, r;
   int i, j, n;
   double al_prev;
 
   al=0.;
   if (assess_root_len<deg+1) {
     assess_root_len=deg+1;
-    assess_root=(unsigned int *)xrealloc(assess_root,assess_root_len*sizeof(unsigned int));
+    assess_root=(uint *)xrealloc(assess_root,assess_root_len*sizeof(uint));
   }
   for (i=0; i<NSMALLPRIMES; i++) {
     al_prev=al;
@@ -582,7 +582,7 @@ void murphy_e(double *me, int deg0, double *dbl_coeff0, int deg1, double *dbl_co
 
 /* ----------------------------------------------- */
 
-void init_assess(double b0, double b1, double area, unsigned int pb)
+void init_assess(double b0, double b1, double area, int pb)
 {
   int i;
   double dp;

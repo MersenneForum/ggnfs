@@ -14,13 +14,15 @@
 */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
 #include <gmp.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#else
+#include "asm/lasieve-asm.h"
 #include "lasieve.h"
-
+#endif
 #ifdef _OLD_FORMAT
 /*******************************************************/
 void input_poly(mpz_t N, mpz_t ** A, i32_t * adeg_ptr, mpz_t ** B,
@@ -143,6 +145,7 @@ void input_poly(mpz_t N, mpz_t ** A, i32_t * adeg_ptr, mpz_t ** B,
 }
 
 #else
+#define MAX(_a, _b) ((_a)>(_b) ? (_a) : (_b))
 /*******************************************************/
 void input_poly(mpz_t N, mpz_t ** A, i32_t *adeg, mpz_t ** B,
                 i32_t *bdeg, mpz_t m, FILE *fp)
@@ -163,7 +166,6 @@ void input_poly(mpz_t N, mpz_t ** A, i32_t *adeg, mpz_t ** B,
     fgets(thisLine, 1023, fp);
     if ((sscanf(thisLine, "%255s %255s", token, value)==2) &&
                 (thisLine[0] != '#')) {
-	  token[sizeof(token)-1] = 0;
       if (strncmp(token, "n:", 2)==0) {
         mpz_set_str(N, value, 10);
       } else if (strncmp(token, "m:", 2)==0) {

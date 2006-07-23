@@ -19,29 +19,19 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4996) /* warning C4996: 'function' was declared deprecated */
-#endif
-
-#include <assert.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#if !defined(_MSC_VER)
+#ifndef _MSC_VER        
 #include <sys/time.h>
 #endif
 
 #include "ggnfs.h"
 
 #ifdef MALLOC_REPORTING
-#if defined(__MINGW32__) || defined(MINGW32)
-#include "malloc.h"
-#else
 #include <malloc.h>
-#endif
 #endif
 
 #define MAX_MSG_SIZE 256
@@ -50,7 +40,7 @@
 /*******************************************************/
 INLINE double sTime()
 /*******************************************************/
-#if !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(MINGW32)
+#ifndef _MSC_VER        
 { static struct  timeval  this_tv;
   static struct  timezone dumbTZ;
   double t;
@@ -90,7 +80,7 @@ double _mpz_log(mpz_t k)
 /* Approximate log(|k|).                          */
 /**************************************************/
 { double res;
-  long e;
+  s32 e;
   static mpz_t _absk;
   static int initialized=0;
 
@@ -251,38 +241,8 @@ C1_5_1_DONE_mp:
   
 }
 
-#ifndef LONG64
-void mpz_set_si64( mpz_t rop, s64 a)
-{
-  if( a < 0 )
-  {
-    a = -a;
-    mpz_import( rop, 1, -1, sizeof(s64), 0, 0, &a );
-    mpz_neg( rop, rop );
-  }
-  else
-  {
-    mpz_import( rop, 1, -1, sizeof(s64), 0, 0, &a );
-  }
-}
-
 /****************************************************/
-void mpz_mul_si64( mpz_t rop, mpz_t op1, s64 a)
-{
-  static int initialized = 0;
-  static mpz_t temp;
-
-  if (initialized == 0) {
-    mpz_init(temp);
-    initialized = 1;
-  }
-  mpz_set_si64( temp, a);
-  mpz_mul( rop, op1, temp );
-}
-#endif /* !LONG64 */
-
-/****************************************************/
-int mpz_evalF(mpz_t res, s64 a, s32 b, mpz_poly f)
+int mpz_evalF(mpz_t res, s32 a, s32 b, mpz_poly f)
 /****************************************************/
 /* Input: integers a, b with b>0, and the poly f.   */
 /* Output: res = F(a, b).                           */
@@ -298,12 +258,12 @@ int mpz_evalF(mpz_t res, s64 a, s32 b, mpz_poly f)
   }
 
   mpz_set(res, &f->coef[0]);
-  mpz_set_si64(apow, a);
+  mpz_set_si(apow, a);
   for (i=1; i<= f->degree; i++) {
     mpz_mul_si(res, res, b);
     mpz_mul(tmp, apow, &f->coef[i]);
     mpz_add(res, res, tmp);
-    mpz_mul_si64(apow, apow, a);
+    mpz_mul_si(apow, apow, a);
   }
   return 0;
 }
@@ -355,8 +315,7 @@ INLINE int fplog_evalF(s32 a, s32 b, nfs_fb_t *FB)
   }
 
   mpz_evalF(norm, a, b, FB->f);
-  assert(mpz_sizeinbase(norm, 2)/(M_LOG2E*FB->log_alb) <= (double)INT_MAX);
-  return (int)(mpz_sizeinbase(norm, 2)/(M_LOG2E*FB->log_alb));
+  return (mpz_sizeinbase(norm, 2)/(M_LOG2E*FB->log_alb));
 }
 
         
@@ -367,8 +326,7 @@ INLINE int fplog_mpz(mpz_t k, double log_of_base)
 /* Return value: round[ log_2(k)]                     */
 /******************************************************/
 {
-  assert(mpz_sizeinbase(k, 2)/(M_LOG2E*log_of_base) <= (double)INT_MAX);
-  return (int)(mpz_sizeinbase(k, 2)/(M_LOG2E*log_of_base));
+  return mpz_sizeinbase(k, 2)/(M_LOG2E*log_of_base);
 }
 
 /******************************************************/
@@ -432,9 +390,9 @@ void msgLog(char *fName, char *fmt, ...)
 /********************************************/
 void printTmp(char *fmt, ...)
 { char    tmp[4*MAX_MSG_SIZE];
-  static  size_t lastSize=0;
+  static  int lastSize=0;
   va_list ap;
-  size_t     i;  
+  int     i;  
 
   /* Grab the message that was passed: It is VERY IMPORTANT */
   /* to have the va_end(ap) after!                          */
@@ -480,12 +438,11 @@ void mpz_fact_add_factor(mpz_fact_t *F, mpz_t factor, int exponent)
 /* Given a sorted (possibly empty) list of factors, add the */
 /* new factor in sorted order.                              */
 /************************************************************/
-{ int i, loc;
-  int c;
+{ int i, loc, c;
   __mpz_struct *tmpFact;
   int          *tmpExp;
 	
-  for (i=0, loc=F->size; (unsigned int)i<F->size; i++) {
+  for (i=0, loc=F->size; i<F->size; i++) {
     c = mpz_cmp(factor, &F->factors[i]);
     if (c==0) {
       F->exponents[i] += exponent;
@@ -507,11 +464,11 @@ void mpz_fact_add_factor(mpz_fact_t *F, mpz_t factor, int exponent)
   }
   mpz_set(&tmpFact[loc], factor);
   tmpExp[loc] = exponent;
-  for (i=loc+1; (unsigned int)i < (F->size+1); i++) {  
+  for (i=loc+1; i< (F->size+1); i++) {  
     mpz_set(&tmpFact[i], &F->factors[i-1]);
     tmpExp[i] = F->exponents[i-1];
   }
-  for (i=0; (unsigned int)i<F->size; i++)
+  for (i=0; i<F->size; i++)
     mpz_clear(&F->factors[i]);
 #ifdef _OLD  
   if (F->factors != NULL)  
@@ -537,131 +494,7 @@ const int  _numLevels=7;
 const int  _numLevels=1;
 #endif
 const s32 _B1Sizes[]={2000, 5000, 10000, 50000, 250000, 1000000, 3000000};
-const u32 _numCurves[]={50, 150, 200, 400, 600, 1000, 1000};
-
-static int mpz_fact_factorRealWork_rec(mpz_fact_t *F, int doRealWork,
-                                       u32 numSmallP, u32 *smallP,
-                                       mpz_t tmp1, mpz_t tmp2, char str[256])
-/****************************************************/
-/* Recursive routine meant to be called from        */
-/* mpz_fact_factorEasy().  Does a power check and,  */
-/* if doRealWork is positive, ECM.  Assumes that    */
-/* trial division and DISC_P_DIV factors have       */
-/* already been divided out (so no need to repeat)  */
-/****************************************************/
-{
-  int        top_e, e, giveUp, retVal, iter, level;
-  mpz_t      s;
-  s32        B1;
-  u32        i;
-  double     B2;
-
-  if (doRealWork < 0) return -1;
-
-  mpz_init(s);
-
-  giveUp = 0;
-  iter=10;
-  level=0;
-  B1 = _B1Sizes[0];
-  B2 = 0;
-  mpz_set_ui(s, 0);
-  top_e = 1;
-  while ((!giveUp) && mpz_cmp_ui(F->unfactored, 1)) {
-    if (mpz_probab_prime_p(F->unfactored, 20)) {
-      msgLog(GGNFS_LOG_NAME, "DISC_P_DIV=%s",
-             mpz_get_str(str, 10, F->unfactored));
-      mpz_fact_add_factor(F, F->unfactored, 1);
-      mpz_set_ui(F->unfactored, 1);
-    } else {
-      /** Do a power check; avoid mpz_perfect_power_p() because **/
-      /** it redoes trial division (as of GMP 4.1.4)            **/
-      e = 1;
-      while (mpz_perfect_square_p(F->unfactored)) {
-        e *= 2;
-        mpz_sqrt(F->unfactored, F->unfactored);
-      }
-      for (i=1; i<numSmallP; i++) {
-        while (mpz_root(tmp1, F->unfactored, smallP[i])) {
-          e *= smallP[i];
-          mpz_set (F->unfactored, tmp1);
-        }
-        if (mpz_cmp_ui(tmp1, smallP[numSmallP-1]) < 0) break;
-      } 
-      if (e > 1) {
-        top_e *= e;
-        if (mpz_probab_prime_p(F->unfactored, 20)) {
-//        printf("found factor with multiplicity %ld\n", e);
-          msgLog(GGNFS_LOG_NAME, "DISC_P_DIV=%s",
-                 mpz_get_str(str, 10, F->unfactored));
-          mpz_fact_add_factor(F, F->unfactored, top_e);
-          mpz_set_ui(F->unfactored, 1);
-        }
-      }
-      /** Now do ECM on the remaining part **/
-      if (mpz_cmp_ui(F->unfactored, 1) && (doRealWork > 0)) {
-        mpz_set(tmp2, F->unfactored);
-        i=0;
-        do {
-          retVal = ecmFactor(tmp1, tmp2, B1, B2, iter, s);
-          i++;
-          if ((i%10)== 0) {
-            printf("Attempt %" PRId32 " / %" PRId32 " for: ", i, _numCurves[level]); 
-            mpz_out_str(stdout, 10, tmp2); 
-            printf("\n");
-          }
-          /* if ECM found input number, try again */
-          if ((retVal > 0) && (mpz_cmp(tmp1, F->unfactored) == 0)) retVal = 0;
-        } while ((retVal==0) && (i<_numCurves[level]));
-        if (retVal <= 0) {
-          if (++level < _numLevels)
-            B1 = _B1Sizes[level];
-	  else
-            giveUp = 1;
-        } else {
-          mpz_divexact(F->unfactored, F->unfactored, tmp1);
-          if (mpz_probab_prime_p(tmp1, 20)) {
-            e = 1;
-            mpz_mod(tmp2, F->unfactored, tmp1);
-            while (mpz_sgn(tmp2)==0) {
-              e++;
-              mpz_divexact(F->unfactored, F->unfactored, tmp1);
-              mpz_mod(tmp2, F->unfactored, tmp1);
-            }
-            msgLog(GGNFS_LOG_NAME, "DISC_P_DIV=%s", mpz_get_str(str, 10, tmp1));
-            mpz_fact_add_factor(F, tmp1, top_e*e);
-	  } else {
-            mpz_fact_t TmpF;
-
-            mpz_fact_init(&TmpF);
-            mpz_set(TmpF.N, tmp1);
-            mpz_set(TmpF.unfactored, tmp1);
-            TmpF.sign = 1;
-	    retVal = mpz_fact_factorRealWork_rec(&TmpF, doRealWork, numSmallP,
-                                                 smallP, tmp1, tmp2, str);
-            if (retVal==0) {
-              for (i=0; i<TmpF.size; i++)
-                mpz_fact_add_factor(F, &TmpF.factors[i],
-                                    top_e*TmpF.exponents[i]);
-            }
-            else
-              doRealWork = 0; /* give up on ECM, but do one more power check */
-            mpz_fact_clear(&TmpF);
-          }
-        }  
-      } /* end ECM block */
-      else
-        giveUp = 1; /* no more power checks, no more ECM */ 
-    }
-  }
-
-  mpz_clear(s);
-  if (mpz_cmp_ui(F->unfactored, 1)==0)
-    return 0;
-  return -1;
-
-}
-
+const s32 _numCurves[]={50, 150, 200, 400, 600, 1000, 1000};
 int mpz_fact_factorEasy(mpz_fact_t *F, mpz_t N, int doRealWork)
 /************************************************************/
 /* Attempt to factor N using trial division and ECM.        */
@@ -669,17 +502,20 @@ int mpz_fact_factorEasy(mpz_fact_t *F, mpz_t N, int doRealWork)
 /* prandseed() should be used first, if you want to set it. */
 /* Return value: 0 <==> factored completely.                */
 /* If doRealWork=0, we will not try too hard. If it is -1   */
-/* we will do only trial division and divisors in ggnfs.log */
+/* we will do only trial division and divisors in ggnfs.log.*/
 /************************************************************/
-{ int        e;
+{ int        e, giveUp, retVal, iter, level;
   u32        numSmallP, *smallP;
-  mpz_t      tmp1, tmp2;
-  u32        i;
+  mpz_t      tmp1, tmp2, s;
+  mpz_fact_t TmpF;
+  s32       i, B1;
+  double     B2;
   FILE       *fp;
   char       str[256], *loc;
   
   mpz_init(tmp1);
   mpz_init(tmp2);
+  mpz_init(s);
 
   mpz_set(F->N, N);
   mpz_set(F->unfactored, N);
@@ -724,7 +560,6 @@ int mpz_fact_factorEasy(mpz_fact_t *F, mpz_t N, int doRealWork)
     i++;
   }
   
-
   /***************************************************/
   /* First, scan the log file to see if we'd already */
   /* factored this number. i.e., just scan through   */
@@ -737,38 +572,92 @@ int mpz_fact_factorEasy(mpz_fact_t *F, mpz_t N, int doRealWork)
       loc = strstr(str, "DISC_P_DIV=");
       if (loc != NULL) {
         mpz_set_str(tmp1, &loc[11], 10);
-        if (mpz_probab_prime_p(tmp1, 20)) {
-          e = 0;
-          mpz_mod(tmp2, F->unfactored, tmp1);
-          while (mpz_sgn(tmp2)==0) {
-            e++;
-            mpz_divexact(F->unfactored, F->unfactored, tmp1);
-            mpz_mod(tmp2, F->unfactored, tmp1);
-          }
-          if (e)
-	  {
-	    mpz_fact_add_factor(F, tmp1, e);
-            if (mpz_cmp_ui(F->unfactored, 1)==0) {
-              msgLog(GGNFS_LOG_NAME, "Discriminant factorization re-read from log file.");
-            }
-	  }
+        mpz_mod(tmp2, F->unfactored, tmp1);
+        if (mpz_sgn(tmp2)==0) {
+          mpz_fact_add_factor(F, tmp1, 1);
+          mpz_div(F->unfactored, F->unfactored, tmp1);
+        }
+        if (mpz_cmp_ui(F->unfactored, 1)==0) {
+          msgLog(GGNFS_LOG_NAME, "Discriminant factorization re-read from log file.");
         }
       }
     }
     fclose(fp);
   }
 
-  if (mpz_cmp_ui(F->unfactored, 1) && (doRealWork >= 0)) {
-    mpz_fact_factorRealWork_rec(F, doRealWork, numSmallP, smallP, tmp1, tmp2, str);
-  }
+
+
   free(smallP);  
+  if (mpz_cmp_ui(F->unfactored, 1)==0) {
+    mpz_clear(tmp1);
+    mpz_clear(tmp2);
+    mpz_clear(s);
+    return 0;
+  } 
+  if (doRealWork <= 0) {
+    mpz_clear(tmp1);
+    mpz_clear(tmp2);
+    mpz_clear(s);
+    return -1;
+  }
+
+
+
+  /** Do ECM on the remaining part **/
+  mpz_fact_init(&TmpF);
+  giveUp = 0;
+  iter=10;
+  level=0;
+  B1 = _B1Sizes[0];
+  B2 = 0;
+  mpz_set_ui(s, 0);
+  while ((!giveUp) && mpz_cmp_ui(F->unfactored, 1)) {
+    if (mpz_probab_prime_p(F->unfactored, 20)) {
+      mpz_fact_add_factor(F, F->unfactored, 1);
+      mpz_set_ui(F->unfactored, 1);
+    } else {
+      mpz_set(tmp2, F->unfactored);
+      i=0;
+      do {
+        retVal = ecmFactor(tmp1, tmp2, B1, B2, iter, s);
+        i++;
+	if ((i%10)== 0) {
+          printf("Attempt %ld / %ld for: ", i, _numCurves[level]); 
+          mpz_out_str(stdout, 10, tmp2); 
+          printf("\n");
+        }
+      } while ((retVal==0) && (i<_numCurves[level]));
+      if (retVal <= 0) {
+        if (++level < _numLevels)
+          B1 = _B1Sizes[level];
+	else
+          giveUp = 1;
+      } else {
+        mpz_div(F->unfactored, F->unfactored, tmp1);
+        if (mpz_probab_prime_p(tmp1, 20)) {
+          msgLog(GGNFS_LOG_NAME, "DISC_P_DIV=%s", mpz_get_str(str, 10, tmp1));
+          mpz_fact_add_factor(F, tmp1, 1);
+	} else {
+	  retVal = mpz_fact_factorEasy(&TmpF, tmp1, doRealWork);
+          if (retVal==0) {
+            for (i=0; i<TmpF.size; i++)
+              mpz_fact_add_factor(F, &TmpF.factors[i], TmpF.exponents[i]);
+            mpz_fact_clear(&TmpF);
+            mpz_fact_init(&TmpF);
+          } else {
+            giveUp = 1;
+	  }
+        }
+      }	  
+    }
+  }
+  mpz_fact_clear(&TmpF);
   mpz_clear(tmp1);
   mpz_clear(tmp2);
+  mpz_clear(s);
   if (mpz_cmp_ui(F->unfactored, 1)==0)
     return 0;
-
   return -1;
-
 }
 	
 
@@ -780,8 +669,7 @@ int mpz_fact_check(mpz_fact_t *D, int doRealWork)
 /* Return value:  0, D was/is ok.                                */
 /*             <> 0, D is not complete.                          */
 /*****************************************************************/
-{ unsigned int i; 
-  int        e, retVal;
+{ int        i, e, retVal;
   mpz_t      tmp1, tmp2;
   mpz_fact_t Tmp;
 	
@@ -830,8 +718,7 @@ int mpz_fact_removeSF(mpz_fact_t *S, mpz_fact_t *F)
 /* Note: Right now, we do only S <-- F/X, where X is the         */
 /*       maximal squarefree divisor of S.                        */
 /*****************************************************************/
-{ unsigned int   i;
-  int j, e, twoLoc=-1;
+{ int   i, j, e, twoLoc=-1;
 
   mpz_fact_clear(S);
   mpz_fact_init(S);
@@ -1125,16 +1012,10 @@ void *lxmalloc(size_t n, int fatal)
 
   mi_allocs++;
   p = malloc(n);
-#ifdef MALLOC_DEBUG
-  FILE* f;
-  f = fopen ("m_info.txt","a+");
-  fprintf(f,"malloc: %ld\n",n);
-  fclose(f);
-#endif
   if (p==NULL) {
     mi_errs++;
-    msgLog("", "Memory allocation error (%" PRIu32 " bytes requested).", n);
-    printf("Memory allocation error (%" PRIu32 " bytes requested).", (u32)n);
+    msgLog("", "Memory allocation error (%ld bytes requested).", (long)n);
+    printf("Memory allocation error (%ld bytes requested).", (long)n);
     if (!(fatal)) return NULL;
     printf("Fatal error. Terminating...\n");
     exit(-1);
@@ -1151,16 +1032,10 @@ void *lxcalloc(size_t n, int fatal)
 
   mi_allocs++;
   p = malloc(n);
-#ifdef MALLOC_DEBUG
-  FILE* f;
-  f = fopen ("m_info.txt","a+");
-  fprintf(f,"calloc: %ld\n",n);
-  fclose(f);
-#endif
   if (p==NULL) {
     mi_errs++;
-    msgLog("", "Memory allocation error (%" PRIu32 " bytes requested).", n);
-    printf("Memory allocation error (%" PRIu32 " bytes requested).", (u32)n);
+    msgLog("", "Memory allocation error (%ld bytes requested).", (long)n);
+    printf("Memory allocation error (%ld bytes requested).", (long)n);
     if (!(fatal)) return NULL;
     printf("Fatal error. Terminating...\n");
     exit(-1);
@@ -1178,17 +1053,11 @@ void *lxrealloc(void *x, size_t n, int fatal)
   int   hu;
 
   mi_reallocs++;
-#ifdef MALLOC_DEBUG
-  FILE* f;
-  f = fopen ("m_info.txt","a+");
-  fprintf(f,"realloc: %ld\n",n);
-  fclose(f);
-#endif
   p = realloc(x, n);
   if (p==NULL) {
     mi_errs++;
-    msgLog("", "Memory allocation error (%" PRIu32 " bytes requested).", n);
-    printf("Memory allocation error (%" PRIu32 " bytes requested).", (u32)n);
+    msgLog("", "Memory allocation error (%ld bytes requested).", (long)n);
+    printf("Memory allocation error (%ld bytes requested).", (long)n);
     if (!(fatal)) return NULL;
     printf("Fatal error. Terminating...\n");
     exit(-1);
@@ -1211,7 +1080,7 @@ int getHeapStats(int *maxUseage, int *errs, int *allocs, int *reallocs)
 /*****************************************************************/
 void logHeapStats()
 {
-  msgLog("", "Max heap usage: %d MB", mi_maxHeapUseage);
+  msgLog("", "Max heap useage: %d MB", mi_maxHeapUseage);
   msgLog("", "malloc/realloc errors: %d ", mi_errs);
   msgLog("", "total malloc's : %d ", mi_allocs);
   msgLog("", "total realloc's: %d ", mi_reallocs);

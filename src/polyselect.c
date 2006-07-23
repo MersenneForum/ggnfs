@@ -33,7 +33,7 @@
 "\n"\
 " __________________________________________________________ \n"\
 "|      This is the polyselect program for GGNFS.           |\n"\
-"| Version: %-25s                       |\n"\
+"| Version: %-15s                                 |\n"\
 "| This program is copyright 2004, Chris Monico, and subject|\n"\
 "| to the terms of the GNU General Public License version 2.|\n"\
 "|__________________________________________________________|\n"\
@@ -1868,7 +1868,7 @@ char *getInputFromFile(char *fName)
 /******************************************************/
 { struct stat fileInfo;
   FILE *fp;
-  off_t  size;
+  s32  size, index;
   char  *input, tmpStr[256];
 
   if (stat(fName, &fileInfo)) {
@@ -1877,10 +1877,11 @@ char *getInputFromFile(char *fName)
   }
   size = 512 + fileInfo.st_size;
   if (!(input = (char *)malloc(size*sizeof(char)))) {
-    fprintf(stderr, "Memory allocation error (%" PRIu64 " bytes for file %s).\n",
-            (u64)size, fName);
+    fprintf(stderr, "Memory allocation error (%ld bytes for file %s).\n",
+            size, fName);
     return "";
   }
+  index=0;
   input[0]=0;
   fp = fopen(fName, "r");
   while (!(feof(fp))) {
@@ -2060,7 +2061,7 @@ int main(int argC, char *args[])
     }
     if (thisScore > bestScore) {
       printTmp(" ");
-      printf("Score: %e (adj. I=%1.4lf, iteration %" PRId32 ", minStage1=%1.2lf)\n", 
+      printf("Score: %e (adj. I=%1.4lf, iteration %ld, minStage1=%1.2lf)\n", 
              thisScore, bestParam.logSize, iteration, minStage1Size);
       bestScore = thisScore;
 
@@ -2083,7 +2084,7 @@ int main(int argC, char *args[])
       fprintf(fp, "# E(F1,F2) = %e\n", bestParam.score);
       fprintf(fp, "# GGNFS version %s polyselect.\n", GGNFS_VERSION);
       fprintf(fp, "# Options were: \n");
-      fprintf(fp, "# lcd=%" PRId32 ", enumLCD=%s, maxS1=%1.8lf, seed=%" PRId32 ".\n",
+      fprintf(fp, "# lcd=%ld, enumLCD=%s, maxS1=%1.8lf, seed=%ld.\n",
                    lcd, mpz_get_str(str, 10, enumLCD), minStage1Size, seed);
       fprintf(fp, "# maxskew=%1.1lf\n", maxSkew);
       writeFactPars(fp, &bestParam);

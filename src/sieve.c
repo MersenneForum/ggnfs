@@ -29,7 +29,6 @@
 #include "ggnfs.h"
 
 int clForceStop = 0;   /* referenced in clsieve.c */
-int clShortOutput = 0; /* Sten: -s command line parameter, referenced in clsieve.c */
 
 #define _CATCH_SIGNALS
 #define DEFAULT_OUTNAME "spairs.out"
@@ -55,14 +54,13 @@ double defaultALambda[MAX_DEFAULTS]={1.0,1.1, 1.3, 1.4,    1.5,     1.6};
 "[OPTIONS]\n"\
 "--help              : show this help and exit\n"\
 "-fb <filename>      : use factor base in file <filename>\n"\
-"-j  <filename>      : use job file <filename>\n"\
-"-s                  : short output format (only a,b)\n"
+"-j  <filename>      : use job file <filename>\n"
 
 #define START_MSG \
 "\n"\
 " __________________________________________________________ \n"\
 "|         This is the sieve program for GGNFS.             |\n"\
-"| Version: %-25s                       |\n"\
+"| Version: %-15s                                 |\n"\
 "| This program is copyright 2004, Chris Monico, and subject|\n"\
 "| to the terms of the GNU General Public License version 2.|\n"\
 "|__________________________________________________________|\n"
@@ -235,7 +233,7 @@ int main(int argC, char *args[])
   double          startTime;
   
   fbname[0]=jobfile[0]=0;
-  clForceStop=0;
+  forceStop=0;
   strncpy(Job.fbName, DEFAULT_FB_NAME, MAXFNAMESIZE);
 
   printf(START_MSG, GGNFS_VERSION);
@@ -245,7 +243,7 @@ int main(int argC, char *args[])
 #ifdef _CATCH_SIGNALS
   signal(SIGTERM, catch_term);
   signal(SIGINT, catch_term);
-#if !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(MINGW32)
+#ifndef _MSC_VER
   signal(SIGQUIT, catch_term);
 #endif
 #endif
@@ -263,9 +261,6 @@ int main(int argC, char *args[])
       if ((++i)<argC) {
         strcpy(jobfile, args[i]);
       }
-    }
-    else if (strcmp(args[i], "-s")==0) { /* Sten: -s command line parameter. */
-      clShortOutput = 1;
     }
     else if (strcmp(args[i], "--help")==0) {
       printf("USAGE: %s %s\n", args[0], USAGE);

@@ -18,8 +18,6 @@
 #define ZEIT
 */
 
-#include "ggnfs.h"
-
 #include <math.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -27,14 +25,13 @@
 #include <unistd.h>
 #include <sys/timeb.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "gmp.h"
 #include "if.h"
+#include "defs.h"
 #include <limits.h>
 #include "fnmatch.h"
 #include <string.h>
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (MINGW32)
-#include "getopt.h"
-#endif
 
 #define START_MESSAGE \
 "----------------------------------------------------\n"\
@@ -54,7 +51,7 @@
 #define  MAX_Y           100  /* !!! */
 #define  SIEVELEN           8192
 
-unsigned int primes[46]={
+uint primes[46]={
  2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
  31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
  73, 79, 83, 89, 97, 101, 103, 107, 109, 113,
@@ -63,10 +60,10 @@ unsigned int primes[46]={
 };
 
 mpz_t gmp_N;
-int compress;
+int compress, verbose=0;
 char *input_line=NULL;
 size_t input_line_alloc=0;
-char *base_name, *filename_data, *output_name, *m_name;
+char *basename, *filename_data, *output_name, *m_name;
 FILE *outputfile, *m_file;
 mpz_t gmp_a[6], gmp_b[6], gmp_help1, gmp_help2, gmp_help3, gmp_help4;
 mpz_t gmp_lina[2], gmp_linb[2], gmp_p, gmp_d, gmp_m, gmp_mb;
@@ -78,12 +75,25 @@ double max_norm_1, max_norm_2, min_e, log_max_norm_2;
 double pol_norm;
 int xmin, xmax, ymin, ymax;
 double bound0, bound1, area;
-unsigned int p_bound;
+int p_bound;
 
 /* statistics */
-int64_t lanz0=0, lanz1=0, lanz2=0, lanz3=0, lanz4=0, lanz5=0;
+long long lanz0=0, lanz1=0, lanz2=0, lanz3=0, lanz4=0, lanz5=0;
 
 /* ----------------------------------------------- */
+#if 0
+int invert(int b, int p)
+{
+  int v1=0, v2=1, v3, r, oldp=p;
+
+  while (b>1) {
+    v3=v1-(p/b)*v2; v1=v2; v2=v3;
+    r=p%b; p=b; b=r;
+  }
+  if (v2<0) v2+=oldp;
+  return v2;
+}
+#endif
 
 int divmod(int a, int b, int pk)  /* a/b mod pk , a, b < 2^15 */
 {
@@ -102,7 +112,7 @@ void get_options(int argc, char **argv)
 {
   char c;
 
-  base_name=NULL;
+  basename=NULL;
   compress=0;
   max_norm_1=1e20; max_norm_2=1e18; min_e=0.;
   p_bound=2000;
@@ -110,7 +120,7 @@ void get_options(int argc, char **argv)
   while ((c=getopt(argc,argv,"A:b:e:F:f:n:N:P:vz")) != (char)(-1)) {
     switch(c) {
     case 'b':
-      base_name=optarg;
+      basename=optarg;
       break;
     case 'A':
       if(sscanf(optarg,"%lf",&area)!=1)
@@ -137,7 +147,7 @@ void get_options(int argc, char **argv)
         complain("Bad argument to -N!\n");
       break;
     case 'P':
-      if(sscanf(optarg,"%u",&p_bound)!=1)
+      if(sscanf(optarg,"%d",&p_bound)!=1)
         complain("Bad argument to -P!\n");
       break;
     case 'v':
@@ -151,8 +161,8 @@ void get_options(int argc, char **argv)
       Schlendrian("");
     }
   }
-  if (base_name==NULL) complain("argument '-b base_name' is necessary\n");
-  asprintf(&filename_data,"%s.data",base_name);
+  if (basename==NULL) complain("argument '-b basename' is necessary\n");
+  asprintf(&filename_data,"%s.data",basename);
   log_max_norm_2=log(max_norm_2);
 }
 
@@ -185,12 +195,12 @@ int find_m_name()
   struct stat statbuf;
   char *tmp_name;
 
-  asprintf(&m_name,"%s.51.m",base_name);
+  asprintf(&m_name,"%s.51.m",basename);
   if (stat(m_name,&statbuf)) {
-    asprintf(&m_name,"%s.51.m.gz",base_name);
+    asprintf(&m_name,"%s.51.m.gz",basename);
     if (stat(m_name,&statbuf)) return 0;
   } else {
-    asprintf(&tmp_name,"%s.51.m.gz",base_name);
+    asprintf(&tmp_name,"%s.51.m.gz",basename);
     if (!stat(tmp_name,&statbuf))
       complain("Both files %s and %s exist.\n",m_name,tmp_name);
     free(tmp_name);
@@ -233,7 +243,7 @@ void open_outputfile()
 
   output_cmd=NULL;
   if (compress!=0) {
-    asprintf(&output_name,"%s.cand.gz",base_name);
+    asprintf(&output_name,"%s.cand.gz",basename);
     asprintf(&output_cmd,"gzip --best --stdout >> %s",output_name);
     if ((outputfile=popen(output_cmd,"w"))==NULL) {
       fprintf(stderr,"%s ",output_name);
@@ -242,7 +252,7 @@ void open_outputfile()
 /*    if (stat(output_name,&statbuf)==0) complain("Output file exists!\n");*/
     free(output_cmd);
   } else {
-    asprintf(&output_name,"%s.cand",base_name);
+    asprintf(&output_name,"%s.cand",basename);
     if ((outputfile=fopen(output_name,"a"))==NULL) {
       fprintf(stderr,"%s ",output_name);
       complain("cannot open file %s",output_name);
@@ -564,7 +574,7 @@ int pol_expand()
 void optimize_1()
 {
   int dk, i, niter;
-  int64_t di1, di0;
+  long long di1, di0;
   double dbl_a0[6];
   double value, v0;
   double s, s0, ds, d;
@@ -576,8 +586,8 @@ void optimize_1()
   s=sqrt(fabs(dbl_a[2]/dbl_a[4]));
   s0=fabs(dbl_a[2]/dbl_a[3]); if (s0>s) s=s0;
   ds=2.;
-  di1=(int64_t)(dbl_a[1]/dbl_d);
-  di0=(int64_t)(dbl_a[0]/dbl_d);
+  di1=(long long)(dbl_a[1]/dbl_d);
+  di0=(long long)(dbl_a[0]/dbl_d);
   value=ifs(dbl_a,s);
   while (1) {
     if (niter>10000) {
@@ -629,7 +639,7 @@ printf("\n");*/
       mpz_add(gmp_a[2],gmp_a[2],gmp_help2);
       mpz_mul(gmp_help1,gmp_help1,gmp_d);
       mpz_sub(gmp_a[1],gmp_a[1],gmp_help1);
-      value=v0; di1=(int64_t)(1+1.1*(double)di1);
+      value=v0; di1=(long long)(1+1.1*(double)di1);
     } else {
       dbl_a[2]-=2*d*dbl_p; dbl_a[1]+=2*d*dbl_d; v0=ifs(dbl_a,s);
       if (v0<value) {
@@ -638,10 +648,10 @@ printf("\n");*/
         mpz_add(gmp_a[2],gmp_a[2],gmp_help2);
         mpz_mul(gmp_help1,gmp_help1,gmp_d);
         mpz_sub(gmp_a[1],gmp_a[1],gmp_help1);
-        value=v0; di1=(int64_t)(1+1.1*(double)di1);
+        value=v0; di1=(long long)(1+1.1*(double)di1);
       } else {
         dbl_a[2]+=d*dbl_p; dbl_a[1]-=d*dbl_d; /* set it back */
-        di1=(int64_t)(0.9*(double)di1-1);
+        di1=(long long)(0.9*(double)di1-1);
         if (di1<1) di1=1;
       }
     }
@@ -657,7 +667,7 @@ printf("\n");*/
       mpz_add(gmp_a[1],gmp_a[1],gmp_help2);
       mpz_mul(gmp_help1,gmp_help1,gmp_d);
       mpz_sub(gmp_a[0],gmp_a[0],gmp_help1);
-      value=v0; di0=(int64_t)(1+1.1*(double)di0);
+      value=v0; di0=(long long)(1+1.1*(double)di0);
     } else {
       dbl_a[1]-=2*d*dbl_p; dbl_a[0]+=2*d*dbl_d; v0=ifs(dbl_a,s);
       if (v0<value) {
@@ -666,10 +676,10 @@ printf("\n");*/
         mpz_add(gmp_a[1],gmp_a[1],gmp_help2);
         mpz_mul(gmp_help1,gmp_help1,gmp_d);
         mpz_sub(gmp_a[0],gmp_a[0],gmp_help1);
-        value=v0; di0=(int64_t)(1+1.1*(double)di0);
+        value=v0; di0=(long long)(1+1.1*(double)di0);
       } else {
         dbl_a[1]+=d*dbl_p; dbl_a[0]-=d*dbl_d; /* set it back */
-        di0=(int64_t)(0.9*(double)di0-1);
+        di0=(long long)(0.9*(double)di0-1);
         if (di0<1) di0=1;
       }
     }
@@ -865,26 +875,26 @@ typedef struct {
   int step;           /* stepwidth p^(k-l) */
   int start;          /* sievearray[start] has zero =i mod p^k */
   int lineinc;        /* increment for change y->y+1 */
-  unsigned short v;            /* scaled value */
+  ushort v;            /* scaled value */
   double value;        /* log(p)/(p^(k-1)*(p+1)) */
 } primelist;
 
 primelist pl[MAX_PRIME_AFF*MAX_PRIME_AFF];
 int primelistlen;
 double limit, tval, st_alpha;
-unsigned short sievearray[SIEVELEN], cut;
+ushort sievearray[SIEVELEN], cut;
 int sievelen, nsubsieves;
 
 int prep_len, prep_p_len[NAFF_PRIMES];
-unsigned int prep_p_begin[NAFF_PRIMES][MAX_PRIME_AFF*2];
-unsigned int *prep_p[NAFF_PRIMES];
+uint prep_p_begin[NAFF_PRIMES][MAX_PRIME_AFF*2];
+uint *prep_p[NAFF_PRIMES];
 
 
 void compute_proj_alpha()
 {
-  unsigned int i, j, k;
-  unsigned int p, p2, p3;
-  unsigned int w, b3, b4, b5;
+  int i, j, k;
+  uint p, p2, p3;
+  uint w, b3, b4, b5;
   double value, dp, dl;
   double table[MAX_PRIME_PROJ];
 
@@ -1226,10 +1236,10 @@ mpz_out_str(stdout,10,gmp_d); printf("\n\n");
 */
 /* provisorisch */
   for (i=0; i<len; i++) {
-    pl[i].v=(unsigned short)(pl[i].value*1000.+0.5);
+    pl[i].v=(ushort)(pl[i].value*1000.+0.5);
     if (pl[i].v==0) pl[i].v=1;
   }
-  cut=(unsigned short)(limit*1000.+0.5);
+  cut=(ushort)(limit*1000.+0.5);
   if (cut==0) cut=1;
 
   primelistlen=len;
@@ -1239,7 +1249,7 @@ mpz_out_str(stdout,10,gmp_d); printf("\n\n");
 void prepare_sieve()
 {
   int l, i0, i1, i, k, p, pk, ii, st;
-  unsigned short *us_ptr;
+  ushort *us_ptr;
 
   l=0; i0=0;
   for (k=0; k<NAFF_PRIMES; k++) {
@@ -1255,7 +1265,7 @@ void prepare_sieve()
         pk=pl[i].primepower;         /* maximal primepower */
 
     for (i=0; i<pk; i++) prep_p_begin[l][i]=0;
-    us_ptr=(unsigned short *)(prep_p_begin[l]);
+    us_ptr=(ushort *)(prep_p_begin[l]);
     for (i=i0; i<i1; i++) {
       st=pl[i].step; ii=pl[i].start;
       while (ii<2*pk) {
@@ -1312,19 +1322,19 @@ void finish_sieve(int nsubsieves, int sievelen) /* provisorisch */
 }
 
 /* CJM, 2/28/05, prototype added: */
-void asm_root_sieve8(unsigned int **p1, unsigned int *p2, int l1, unsigned int *p4, int l2);
+void asm_root_sieve8(uint **p1, uint *p2, int l1, uint *p4, int l2);
 
 
 void sieve_new(int len)
 {
   int   i, len2;
-  unsigned int *ul_sv;
+  uint *ul_sv;
 #ifndef HAVE_ASM_INTEL
   int ind, end;
-  unsigned int *ptr, *ptrbegin, *ptrend;
+  uint *ptr, *ptrbegin, *ptrend;
 #endif
 
-  len2=len/2; ul_sv=(unsigned int *)sievearray;
+  len2=len/2; ul_sv=(uint *)sievearray;
   memset(sievearray,0,len*sizeof(*sievearray));
   for (i=0; i<prep_len; i++) {
 #ifdef HAVE_ASM_INTEL
@@ -1408,7 +1418,7 @@ zeitb(5);
     v=ifs(dbl_sv,sk);
     dbl_sv[2]+=dbl_p; dbl_sv[1]-=dbl_d;
     v=log(v)/2.;
-    cut=(unsigned short)((limit+v-lim0)*1000+0.5);
+    cut=(ushort)((limit+v-lim0)*1000+0.5);
     if (cut==0) cut=1;
     if (verbose>2) printf("y: %d, lim: %f cut: %d,  sk: %.2f\n",y,v,(int)cut,sk);
 

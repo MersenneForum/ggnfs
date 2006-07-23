@@ -11,7 +11,7 @@
   02111-1307, USA.
 */
 
-#include "siever-config.h"
+#include "lasieve-asm.h"
 
 /********************************************************/
 u32_t gcd32(u32_t x, u32_t y)

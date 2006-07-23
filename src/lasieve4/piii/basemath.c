@@ -15,26 +15,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include "siever-config.h"
+#include "lasieve-asm.h"
 
-extern uint32_t montgomery_inv_n;
-extern uint32_t *montgomery_modulo_n;
-extern uint32_t montgomery_modulo_R2[NMAX_ULONGS];
-extern uint32_t montgomery_modulo_R4[NMAX_ULONGS];
-extern uint32_t montgomery_ulongs;
+extern ulong montgomery_inv_n;
+extern ulong *montgomery_modulo_n;
+extern ulong montgomery_modulo_R2[NMAX_ULONGS];
+extern ulong montgomery_modulo_R4[NMAX_ULONGS];
+extern ulong montgomery_ulongs;
 
-extern void (*asm_mulmod) (uint32_t *, uint32_t *, uint32_t *);
-extern void (*asm_add2) (uint32_t *, uint32_t *);
-extern void (*asm_diff) (uint32_t *, uint32_t *, uint32_t *);
-extern void (*asm_zero) (uint32_t *);
-extern void (*asm_copy) (uint32_t *, uint32_t *);
-extern void (*asm_add2_ui) (uint32_t *, uint32_t);
-extern void (*asm_sub) (uint32_t *, uint32_t *, uint32_t *);
-extern void (*asm_sub_n) (uint32_t *, uint32_t *);
-extern void (*asm_half) (uint32_t *);
+extern void (*asm_mulmod) (ulong *, ulong *, ulong *);
+extern void (*asm_add2) (ulong *, ulong *);
+extern void (*asm_diff) (ulong *, ulong *, ulong *);
+extern void (*asm_zero) (ulong *);
+extern void (*asm_copy) (ulong *, ulong *);
+extern void (*asm_add2_ui) (ulong *, ulong);
+extern void (*asm_sub) (ulong *, ulong *, ulong *);
+extern void (*asm_sub_n) (ulong *, ulong *);
+extern void (*asm_half) (ulong *);
 
 /**************************************************/
-int asm_cmp64(uint32_t * a, uint32_t * b)
+int asm_cmp64(ulong * a, ulong * b)
 /**************************************************/
 {
   if (a[0] != b[0])
@@ -45,9 +45,9 @@ int asm_cmp64(uint32_t * a, uint32_t * b)
 }
 
 /**************************************************/
-int asm_cmp(uint32_t * a, uint32_t * b)
+int asm_cmp(ulong * a, ulong * b)
 /**************************************************/
-{ uint32_t i;
+{ long i;
 
   for (i = 0; i < montgomery_ulongs; i++)
     if (a[i] != b[i])
@@ -56,9 +56,9 @@ int asm_cmp(uint32_t * a, uint32_t * b)
 }
 
 /**************************************************/
-void gcd64(uint32_t * gcd, uint32_t * a, uint32_t * b)
+void gcd64(ulong * gcd, ulong * a, ulong * b)
 /**************************************************/
-{ uint32_t r[2], bb[2], aa[2];
+{ ulong r[2], bb[2], aa[2];
 
   if (!(a[0] | a[1])) {
     gcd[0] = b[0];
@@ -102,10 +102,10 @@ void gcd64(uint32_t * gcd, uint32_t * a, uint32_t * b)
   gcd[1] = aa[1];
 }
 
-/**************************************************
-void gcd(uint32_t * gcd, uint32_t * a, uint32_t * b)
-**************************************************
-{ uint32_t r[NMAX_ULONGS], bb[NMAX_ULONGS], aa[NMAX_ULONGS];
+/**************************************************/
+void gcd(ulong * gcd, ulong * a, ulong * b)
+/**************************************************/
+{ ulong r[NMAX_ULONGS], bb[NMAX_ULONGS], aa[NMAX_ULONGS];
   long i;
 
   for (i = 0; i < montgomery_ulongs; i++)
@@ -156,13 +156,13 @@ void gcd(uint32_t * gcd, uint32_t * a, uint32_t * b)
       asm_copy(bb, r);
   }
   asm_copy(gcd, aa);
-}*/
+}
 
 /**************************************************/
-void asm_half_old(uint32_t * a)
+void asm_half_old(ulong * a)
 /**************************************************/
-{ uint32_t c, n_half[NMAX_ULONGS];
-  uint32_t i;
+{ ulong c, n_half[NMAX_ULONGS];
+  long i;
 
   for (i = 0; i < montgomery_ulongs - 1; i++)
     n_half[i] =
@@ -180,20 +180,17 @@ void asm_half_old(uint32_t * a)
 }
 
 /**************************************************/
-int asm_invert(uint32_t * res, uint32_t * b)
+int asm_invert(ulong * res, ulong * b)
 /**************************************************/ 
-{ long i;
-  long f1, len;
-  uint32_t t1[NMAX_ULONGS], t2[NMAX_ULONGS];
-  uint32_t v1[NMAX_ULONGS], v2[NMAX_ULONGS];
-#if 0
-  uint32_t n_half[NMAX_ULONGS];
-#endif
+{ long i, f1, len;
+  ulong t1[NMAX_ULONGS], t2[NMAX_ULONGS];
+  ulong v1[NMAX_ULONGS], v2[NMAX_ULONGS];
+  ulong n_half[NMAX_ULONGS];
 
-  for (i = 0; i < (long)montgomery_ulongs; i++)
+  for (i = 0; i < montgomery_ulongs; i++)
     if (b[i])
       break;
-  if (i >= (long)montgomery_ulongs)
+  if (i >= montgomery_ulongs)
     return 0;
   if (b[0] & 1) {
     asm_copy(t1, b);
@@ -249,7 +246,7 @@ int asm_invert(uint32_t * res, uint32_t * b)
   }
   if (t1[0] != 1)
     return 0;
-  for (i = 1; i < (long)montgomery_ulongs; i++)
+  for (i = 1; i < montgomery_ulongs; i++)
     if (t1[i])
       return 0;
   if (f1)

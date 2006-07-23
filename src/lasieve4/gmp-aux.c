@@ -17,8 +17,12 @@
 #include <sys/types.h>
 #include <string.h>
 #include <gmp.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#else
+#include "asm/lasieve-asm.h"
 #include "lasieve.h"
+#endif
 
 /********************************************************/
 void adjust_mpz_bufsize(mpz_t ** x, size_t * alloc_ptr, size_t size,

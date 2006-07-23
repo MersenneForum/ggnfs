@@ -43,15 +43,15 @@
 "-if <filename>    : read n, m, f from <filename>\n"\
 "-rl <limit>       : create a rational factor base upto <limit>\n"\
 "-al <limit>       : create an algebraic factor base with norms upto <limit>\n"\
+"  The next two options are for backward-compatibility:\n"\
+"-rs <size>        : create a rational factor base of size <size>\n"\
+"-as <size>        : create an algebraic factor base of size <size>\n"\
 "-mpr <long>       : max large rational prime for large-prime variation\n"\
 "-mpa <long>       : max large algebraic prime for large-prime variation\n"\
 "-lpbr <int>       : max bits in large rational prime.\n"\
 "-lpba <int>       : max bits in large algebraic prime.\n"\
 "-2p               : Upto 2 large rat. and algebraic primes (default is 1).\n"\
-"-3p               : Upto 3 large rat. and algebraic primes (default is 1).\n"\
-"  The next two options are for backward-compatibility:\n"\
-"-rs <size>        : create a rational factor base of size <size>\n"\
-"-as <size>        : create an algebraic factor base of size <size>\n"
+"-3p               : Upto 3 large rat. and algebraic primes (default is 1).\n"
 
 
 /*********************************************************************/
@@ -289,19 +289,19 @@ int createFB(nfs_fb_t *FB, char *ofname)
 
     msgLog("", "name: %s", FB->name);
     mpz_get_str(str, 10, FB->n);
-    msgLog("", "n=%s (%ld digits)", str, strlen(str));
+    msgLog("", "n=%s (%d digits)", str, strlen(str));
     for (i=0; i<=FB->f->degree; i++) {
       mpz_get_str(str, 10, &FB->f->coef[i]);
       msgLog("", "c%d: %s", i, str);
     }
-    msgLog("", "RFBsize: %" PRId32 " (upto %" PRId32 ")", FB->rfb_size, 
+    msgLog("", "RFBsize: %ld (upto %ld)", FB->rfb_size, 
            FB->rfb[2*(FB->rfb_size-1)]);
-    msgLog("", "AFBsize: %" PRId32 " (upto %" PRId32 ")", FB->afb_size,
+    msgLog("", "AFBsize: %ld (upto %ld)", FB->afb_size,
            FB->afb[2*(FB->afb_size-1)]);
     msgLog("", "maxNumLargeRatPrimes: %d", FB->maxLP);
-    msgLog("", "maxLargeRatPrime: %" PRId32, FB->maxP_r);
+    msgLog("", "maxLargeRatPrime: %ld", FB->maxP_r);
     msgLog("", "maxNumLargeAlgPrimes: %d", FB->maxLPA);
-    msgLog("", "maxLargeAlgPrime: %" PRId32, FB->maxP_a);
+    msgLog("", "maxLargeAlgPrime: %ld", FB->maxP_a);
     
 
 

@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ggnfs.h"
 #include "prand.h"
+#include "ggnfs.h"
 
 
 #ifdef __GNUC__
@@ -93,89 +93,6 @@ int  doColumnOps64(u64 *A, u64 *B, s32 n);
 void seedBlockLanczos(s32 seed)
 { prandseed(seed, 712*seed + 21283, seed^0xF3C91D1A);
 }
-
-
-/**************************************************/
-int testMult(nfs_sparse_mat_t *P)
-/**************************************************/
-/* Test the matrix multiplication routines.       */
-/**************************************************/
-{ u64 *u, *x, *y, *z, t;
-  int  i, fail=0, totalFailures=0;
-  long j, n=P->numCols;
-
-  u = (u64 *)malloc(n*sizeof(u64));
-  x = (u64 *)malloc(n*sizeof(u64));
-  y = (u64 *)malloc(n*sizeof(u64));
-  z = (u64 *)malloc(n*sizeof(u64));
-  if (!(u&&x&&y&&z)) {
-    printf("testMult(): Memory allocation error!\n");
-    exit(-1);
-  }
-  memset(u, 0x00, n*sizeof(u64));
-  memset(x, 0x00, n*sizeof(u64));
-  memset(y, 0x00, n*sizeof(u64));
-  memset(z, 0x00, n*sizeof(u64));
-  for (i=0; i<30; i++) {
-    for (j=0; j<n; j++) {
-      t = prand();
-      t = (t<<32)^prand();
-      u[j]=t;
-      x[j] ^= t;
-    }
-    MultB64(y, u, (void *)P);
-    for (j=0; j<n; j++)
-      z[j] ^= y[j];
-  }
-  MultB64(y, x, (void *)P);
-  for (j=0; j<n; j++) {
-    if (y[j] != z[j]) {
-      printf("product MultB64() failure at column %ld!\n", j);
-      printf(" y[j] = 0x%" PRIX64 ",\n", y[j]);
-      printf(" z[j] = 0x%" PRIX64 ".\n", z[j]);
-      fail=1;
-    }
-  }
-  if (!fail) 
-    printf("First matrix product test passed.\n");
-
-  totalFailures += fail;
-  fail=0;
-  memset(u, 0x00, n*sizeof(u64));
-  memset(x, 0x00, n*sizeof(u64));
-  memset(y, 0x00, n*sizeof(u64));
-  memset(z, 0x00, n*sizeof(u64));
-  for (i=0; i<30; i++) {
-    for (j=0; j<n; j++) {
-      t = prand();
-      t = (t<<32)^prand();
-      u[j]=t;
-      x[j] ^= t;
-    }
-    MultB_T64(y, u, (void *)P);
-    for (j=0; j<n; j++)
-      z[j] ^= y[j];
-  }
-  MultB_T64(y, x, (void *)P);
-  for (j=0; j<n; j++) {
-    if (y[j] != z[j]) {
-      printf("product MultB_T64() failure at column %ld!\n", j);
-      printf(" y[j] = 0x%" PRIX64 ",\n", y[j]);
-      printf(" z[j] = 0x%" PRIX64 ".\n", z[j]);
-      fail=1;
-    }
-  }
-
-  if (!fail) 
-    printf("Second matrix product test passed.\n");
-
-  totalFailures += fail;
-  fail=0;
-
-  free(u); free(x); free(y); free(z);
-  return totalFailures;
-}
-
 
 void MultB64(u64 *Product, u64 *x, void *P) {
   nfs_sparse_mat_t *M = (nfs_sparse_mat_t *)P;
@@ -348,11 +265,10 @@ void MultB_T64(u64 *Product, u64 *x, void *P) {
 
 /**********************************************************************/
 int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB, 
-                   MAT_MULT_FUNC_PTR64 MultB_T, void *P, s32 n,
-                   long testMode)
+                  MAT_MULT_FUNC_PTR64 MultB_T, void *P, s32 n)
 /**********************************************************************/
 { u64 *Y=NULL, *X=NULL, *Vi=NULL, *Vi_1=NULL, *Vi_2=NULL, *tmp_n=NULL, *tmp2_n=NULL;
-  u64 *V0=NULL, *Z=NULL, *AZ=NULL;
+  u64 *V0=NULL, *tmp3_n=NULL, *Z=NULL, *AZ=NULL;
   u64 D[64] ALIGNED16, E[64] ALIGNED16, F[64] ALIGNED16, Wi[64] ALIGNED16;
   u64 Wi_1[64] ALIGNED16, Wi_2[64] ALIGNED16, T[64] ALIGNED16, T_1[64] ALIGNED16;
   u64 tmp[64] ALIGNED16;
@@ -361,23 +277,7 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
   u64 i, j, m, mask, isZero, r1,r2;
   u32  iterations;
   int  errs=0, numDeps=-1, cont, s;
-  double startTime, now, estTotal, save_time;
 
-  if (testMode) {
-    printf("Testing multiply routines...\n");
-    j = 0;
-    for(i=1; ; i++) {
-      j += testMult((nfs_sparse_mat_t *)P);
-      if (!(i%10))
-	printf("***Iteration %" PRIu64 ": %" PRIu64 " multiply failures.***\n",
-	       i, j);
-    }
-  } else {
-    if (testMult((nfs_sparse_mat_t *)P)) {
-      printf("Self test reported some errors! Stopping...\n");
-      exit(-1);
-    }
-  }
   
   /* Memory allocation: */
   if (!(Y = (u64 *)malloc(n*sizeof(u64))))    errs++;
@@ -388,23 +288,11 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
   if (!(Vi_2 = (u64 *)malloc(n*sizeof(u64)))) errs++;
   if (!(tmp_n = (u64 *)malloc(n*sizeof(u64)))) errs++;
   if (!(tmp2_n = (u64 *)malloc(n*sizeof(u64)))) errs++;
+  if (!(tmp3_n = (u64 *)malloc(n*sizeof(u64)))) errs++;
 
-  if (errs) {
-    fprintf(stderr, "blanczos(): Memory allocation error!\n");
+  if (errs)
     goto SHORT_CIRC_STOP;
-  }
   
-  iterations = matresume(n,Wi,Wi_1,Wi_2,T_1,tmp,U_1,tmp2,Si,Si_1,
-                         X,Y,Vi,Vi_1,Vi_2);
-  if (iterations > 0) {
-    i = iterations;
-    MultB(tmp_n, Y, P); 
-    MultB_T(V0, tmp_n, P);
-    MultB(tmp2_n, Vi, P);
-    MultB_T(tmp_n, tmp2_n, P);
-    multT(T, Vi, tmp_n, n);
-    cont = 1;
-  } else {
   /******************************************************************/
   /* Throughout, 'A' means the matrix A := (B^T)B. In fact, all the */
   /* notation is directly from Montgomery's paper, except that I    */
@@ -414,7 +302,7 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
   for (j=0; j<n; j++) {
     r1 = prand(); r2 = prand(); 
     Y[j] = r1^(r2<<32);
-    X[j] = Vi_1[j] = Vi_2[j] = tmp_n[j] = tmp2_n[j] = 0;
+    X[j] = Vi_1[j] = Vi_2[j] = tmp_n[j] = tmp2_n[j] = tmp3_n[j] = 0;
   }
   for (i=0; i<64; i++) {
     Wi[i] = Wi_1[i] = Wi_2[i] = 0;
@@ -440,10 +328,6 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
   mult64x64(tmp2, Wi, tmp); /* tmp2 <-- (W0)(tmp) = (W0)(V0^T)(V0). */
   multnx64(X, V0, tmp2, n); /* X <-- V0(tmp2). */
   iterations = 0;
-  }
-
-  startTime = sTime();
-  save_time = startTime + matsave_interval;
   do {
     /* Iteration step. */
     iterations++;
@@ -529,28 +413,17 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
       cont=0;
       m = i;
     }
-    now = sTime();
-    estTotal = ((double)1.02*n/(iterations*64.0))*(now-startTime);
-    printTmp("Lanczos(genC): Estimate %1.1lf%% complete (%1.1lf secs / %1.1lf secs)...",
-              (double)100.0*64.0*iterations/(1.02*n), now-startTime, estTotal);  
+    printTmp("Lanczos: Estimate %1.1lf%% complete...",
+              (double)100.0*64.0*iterations/n);  
     if ((double)100.0*64.0*iterations/n > 250) {
       fprintf(stderr, "Some error has occurred: Lanczos is not converging!\n");
-      fprintf(stderr, "Number of iterations is %" PRIu32 ".\n", iterations);
+      fprintf(stderr, "Number of iterations is %ld.\n", iterations);
       /* Add some debugging stuff here! */
       fprintf(stderr, "Terminating...\n");
       exit(-1);
     }
-    if (matsave_interval != 0) {
-      if (matsave_interval < 0 || now > save_time) {
-        matsave(iterations,n,Wi,Wi_1,Wi_2,T_1,tmp,U_1,tmp2,Si,Si_1,
-                X,Y,Vi,Vi_1,Vi_2);
-        if (matsave_interval == -1)
-          goto SHORT_CIRC_STOP;
-        save_time += matsave_interval;
-      }
-    }
   } while (cont);
-  printf("\nBlock Lanczos used %" PRIu32 " iterations.\n", iterations);
+  printf("\nBlock Lanczos used %ld iterations.\n", iterations);
 
           
   Z = (u64 *)malloc(2*n*sizeof(u64));
@@ -569,8 +442,8 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
   } else {
     printf("After Block Lanczos iteration, Vm is nonzero. Finishing...\n");
     /* We need more memory (for convenience), so free off what we don't need. */
-    free(V0); free(Vi_1); free(Vi_2);
-    V0 = Vi_1 = Vi_2 = NULL;
+    free(V0); free(Vi_1); free(Vi_2); free(tmp3_n);
+    V0 = Vi_1 = Vi_2 = tmp3_n = NULL;
 
     /* Construct Z=[ X+Y | Vi] and compute AZ=[ A(X+Y) | AVi ] */
     /* X <-- X+Y, for convenience.                     */
@@ -663,7 +536,7 @@ int blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 MultB,
     if (tmp_n[i])
       isZero = 0;
   if (!(isZero))
-    printf("Some error occurred: Final product (B)(deps) is nonzero (i=%" PRIu64 ")!\n", i);
+    printf("Some error occurred: Final product (B)(deps) is nonzero (i=%ld)!\n", (s32)i);
   else
     printf("Verified.\n"); 
 
@@ -679,6 +552,7 @@ SHORT_CIRC_STOP:
   if (Vi_2 != NULL)   free(Vi_2);
   if (tmp_n != NULL)  free(tmp_n);
   if (tmp2_n != NULL) free(tmp2_n);
+  if (tmp3_n != NULL) free(tmp3_n);
   if (Z != NULL)      free(Z);
   if (AZ != NULL)     free(AZ);
   return numDeps;

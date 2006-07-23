@@ -12,7 +12,8 @@ CFLAGS= -O3
 CC=gcc
 CTANGLE=ctangle
 
-SRCFILES=gcd32.c 32bit.h modinv32.c psp.c lasched.w medsched.w siever-config.w
+SRCFILES=gcd32.c 32bit.h modinv32.c mpqs.c psp.c Makefile \
+	lasched.w medsched.w siever-config.w
 
 %.c: %.w %.ch
 	$(CTANGLE) $*.w $*.ch
@@ -35,6 +36,9 @@ SRCFILES=gcd32.c 32bit.h modinv32.c psp.c lasched.w medsched.w siever-config.w
 %.dvi: %.tex
 	tex $<
 
+%.s: %.asm
+	gasp -c '#' -o $@ $^
+
 %.o: %.s
 	cc -c $^
 
@@ -48,7 +52,9 @@ if.h:	../if.h
 gmp-aux.h: ../gmp-aux.h
 	cp -f $^ $@
 
-liblasieve.a: gcd32.o psp.o modinv32.o
+mpqs.o:	if.h gmp-aux.h
+
+liblasieve.a: gcd32.o psp.o mpqs.o modinv32.o
 	ar rcs $@ $^
 
 laschedI%.o: lasched.c siever-config.h if.h

@@ -1,398 +1,3 @@
-07/22/06 (asl)
-  * Separated matrix pruning into separate program.
-  * factLat.pl was changed in order to track changes in flow.
-  * Added smart adjustment of maxRelsInFF: if supplied value is
-    zero, program will select it as small as possible.
-  * Set default for maxRelsInFF for factLat.pl to zero.
-
-07/21/06 (relf)
-  * GGNFS_VERBOSE introduced (on by default)
-  * some auxiliary output in rels.c wrapped with #ifdef GGNFS_VERBOSE .. #endif
-
-07/07/06 (relf)
-  * minor enhacements
-  * forzles' patch http://groups.yahoo.com/group/ggnfs/message/1894 applied
-
-6/10/06 (asl)
-  * Fix for PPC by Mark Rodenkirch
-  * Added -nolpcount command line switch (by forzles)
-  * Bugfix for M->maxDataSize was not setup correctly (by forzles)
-
-6/9/06 (asl)
-  * Incorporated Cygwin compatibility fix by R. Backstrom
-  * Workaround of GMP 4.2 bug - use GMP_BUG switch in makefile.
-    (http://swox.com/list-archives/gmp-bugs/2006-May/000475.html)
-
-6/8/06 (frmky)
-  * Removed unused readRawS32() and writeRawS32() prototypes from ggnfs.h
-  * Incorporate the patch by forzles to fix the odd exponent error
-  * Silence the frequent, harmless warnings in the lattice sieve 
-  * Change the extension of the plots from jpg to png to reflect that
-    they are actually in PNG format
-
-05/24/06 (BRG)
-  * Updated VC++ version 8 build project to use GMP-4.2.1
-
-05/13/06 (asl)
-  * Some compartibility changes.
-  * Merged latest patches by G.W. Reynolds & tested under mingw32.
-
-03/16/06 (BRG)
-  * Updated VC++ version 8 build project to include matrix save
-    routines and to work with my current VC++ build for GMP 4.1.4
-
-03/11/06 (asl)
-  * Ported & tested matrix save\resume routines under mingw32.
-    Maybe this will also work while compiled by Visual C++. ;)
-
-03/10/06 (asl)
-  * Added matrix save\resume routine by G.W. Reynolds.
-
-02/02/06 (relf)
-  * NEED_ASPRINTF, NEED_GETLINE are replaced with GGNFS_GNU_MISSING
-  which is now defined in ggnfs.h
-  * fixed all affected headers
-  * WARNING: if GNU extensions are used, <stdio.h> should not be included directly
-  but through ggnfs.h or at least after it
-
-12/12/05 (trilliwig)
-  * Header file fixes for Linux.
-
-12/02/05 (relf)
-  * matbuild-tpie.c merged with matbuild.c
-  * matbuild.c minor cleanups
-
-12/01/05 (relf)
-  * file size/offset types changed to off_t
-  * ULL_NO_UL is defined for 32-bit platforms
-  * minor cleanups in mpz-ull.c
-  * rel_list members became unsigned
-  * readRawS32/writeRawS32 definition moved to ggnfs.h
-
-11/16/05 (aSL)
-  * Some factLat.pl changes by Mark Rodenkirch
-
-11/04/05 (relf)
-  * __ppc64__ is used together with __ppc__
-  * GNFS_CS32 is removed, bc_t is defined as `unsigned long'
-  * ULL_NO_UL is back, it must be defined whenever 'long long' is different from 'long'
-
-10/30/05 (trilliwig)
-  * Patched factLat.pl with Bob Backstrom's suggested change.  Updated q0-q1
-    ranges are printed in ggnfs.log.
-  * Minor update in misc.c to correct multiple printings of a status message.
-
-9/30/05 (trilliwig)
-  * It makes no sense to disable HAVE_FLOAT64 if HAVE_ASM_INTEL is defined.
-    This causes pol51m0b to miss essential polynomials and causes the abnormal
-    exit messages "lambda-comp" or "ull5a5p-comp".  The only bug that exists
-    with both options enabled is that the compiled binary is completely broken
-    if we allow compiler optimization with GCC 3.4.  This appears to be a bug
-    with GCC 3.4, but disabling HAVE_FLOAT64 for MinGW is NOT a proper
-    workaround because it leaves pol5 compiles broken on 32-bit Linux!  The
-    correct workaround is disabling compiler optimizations for pol5 when
-    GCC 3.4 is used.
-  * Modified factLat.pl so pol5 errors are fatal errors again.
-  * Modified matbuild so errors from checkMat() are not immediately fatal.
-    The code is there to delete problematic rows, but it was never used
-    because matbuild would exit unconditionally.  There is similar code in
-    matsolve, but I think it is better to keep the hair-trigger exit there.
-  * -Os is only beneficial for the lattice siever, and even then only on
-    some machines (it is slower than -O3 on a Prescott).  Changed default
-    CFLAGS to use -O3 and added -Os to CFLAGS in the src/lasieve4 directory.
-    As an aside, using -funroll-loops and -finline-functions with -Os is
-    counterproductive.
-
-9/27/05 (relf)
-  * -fmove-all-movables option removed as not supported by gcc 4.x
-  * minor cleanups
-
-9/25/05 (Sten)
-  * Initial support for Win64 target (see VC8 solution files).
-  * removed ASM_MPQS_SIEVER;ASM_MPQS_EVAL;ASM_MPQS_TD definitions from the
-    VC8 projects properties for ggnfs-lasieve projects (currently asm-optimized
-    versions do not work for some reason).
-
-9/24/05 (trilliwig)
-  * Ensure prand() returns a 32-bit quantity.
-  * Added a -test mode to matsolve.  This will go into an infinite loop
-    testing the MultB64() and MultB_T64() routines with the given matrix.
-    This can help expose hardware errors or miscompilations.
-  * Freed memory used in testMult().
-  * Tweaked the status update message for Block Lanczos so it doesn't
-    overflow the line.
-  * Added dependencies for strip target.
-
-9/18/05 (frmky)
-  * Update blanczos-no-mmx.c to include multiplication tests and timing.
-
-9/18/05 (trilliwig)
-  * Changed char* variable basename to base_name (conflicts with the
-    basename() library function).
-  * Added Makefile rule for *.S files and changed *.s rule to use $(CC)
-    (so I can easily add -m32 to CFLAGS when needed and have it work).
-  * Added prescott target and cleaned up a few warnings.
-
-9/16/05 (trilliwig)
-  * Fixed type mismatch with rho_factor() causing procrels crashes on 64-bit
-    machines.
-  * mpz_poly_t.degree and getline() MUST be signed.  It is a bug if they are
-    unsigned.
-  * Added nocona target for Intel chips with AMD64 support.
-
-9/15/05 (Brian Gladman)
-  * minor fix for VC7 build files
-
-9/10/05 (asl)
-  * Some small fixes in the sprit of further "config" files.
-  * Removed forceStop from ggnfs.h
-
-9/3/05 (trilliwig)
-  * Cleaned up some redundant compiler flags and defines.  In particular,
-    -mtune is implied by -march.  Not to mention that in versions of gcc
-    before 3.4, -mtune is not recognized (it was -mcpu).
-  * Forced compilation flags for the Franke polynomial selection tools to
-    use -O0 (no optimization).  Optimization breaks pol51* on Linux and MinGW,
-    at least with gcc 3.4.  This allows us to use long doubles (HAVE_FLOAT64)
-    under MinGW now, so that should mitigate the performance impact somewhat.
-  * Changed getline() return type in src/if.[ch].  It must return a signed
-    size (ssize_t).  This fixes the pol51m0b breakage under Linux.  Also
-    added explicit typing of compute_root()'s argument in src/pol5/pol51m0?.c.
-  * The lattice siever no longer opens ggnfs.log in binary mode, so those
-    output lines should now be correctly terminated under Windows.
-  * Removed bigint library specification as GMP from factLat.pl.  Apparently
-    the GMP BigInt library is not available to Perl on some systems.
-  * Modified factLat.pl to print q0 values to ggnfs.log at beginning of
-    lattice sieve runs.
-  * Added Brian Gladman's definitions of ssize_t to the MS portion of ggnfs.h.
-
-8/29/05 (Brian Gladman)
-  * added matbuild-tpie to the VC7 and VC8 build projects (could not do
-    this for VC6 as I no longer use this version)
-
-8/29/05 (Brian Gladman)
-  * change to VC6, VC7 and VC8 build organisation to provide individual
-    build directories (to avoid object file version conflicts)
-  * copied Intel syntax assembler files from VC++ build directory
-    to src\lasieve4\piii and src\pol5 so they are alongside their
-    AT&T equivalents
-
-8/27/05 (Brian Gladman)
-  * change to VC6 and VC7 project files to make move to VC8 easier
-
-8/26/05 (Brian Gladman)
-  * minor update to correct an error in the VC++ project build files
-
-8/24/05 (trilliwig)
-  * Added LOCALINC to include paths in Makefiles for src/lasieve4/piii,
-    src/lasieve4/ppc32, and src/pol5.  Anyone able to try if the itanium
-    or mips lattice siever code works? :)
-  * Added Makefile to tests/snfs_small
-  * Eliminated _MSC_VER define when compiling under MinGW
-  * Added copy of pol51-intel executables to a name without the suffix, so
-    the factLat.pl script can still find them.  It really should be a
-    symlink, but under MinGW, "ln -s" is a synonym for cp, and cp does not
-    treat relative pathnames in the same way that ln does.
-  * Fixed makesymlinks.sh
-
-8/24/05 (relf)
-  * lasieve-asm.h renamed to siever-config.h
-  * 'ppc32' now linked to 'asm' (very much like 'piii')
-  * Makefile's unified: no Makefile[.x86|.ppc|whatever] anymore
-  * underscore problem fixed, ASM_UL removed
-  * pol5/Makefile became $HOST-driven; "-intel" suffix removed from binaries
-
-8/23/05 (Brian Gladman)
-  * minor change to define strcasecmp as _strcmpi for VC++ and
-    to include the 'fake' VC++ unistd.h file in if.c  Replace
-	the define of _MSC_VER in ecm4c.c in order to simplify
-	the use of a VC++ config file.
-
-8/23/05 (Brian Gladman)
-  * some minor changes to allow VC++ to use the inline version of
-  	MULMOD32 instead of a subroutine (VC++ inline assembler can't
-	deal directly with structures)
-  * removal of special VC++ versions of if.c and if.h as the
-    standard versions now work
-  * changed a define in /piii/lasieve-asm.h	to be right way round
-    (is now '#define modinv32 asm_modinv32', was reversed)
-  * added {} brackets in gnfs-lasieve4e.c to avoid need for C99
-    with an 'in-code' declaration
-
-8/22/05 (asl)
-  * Some code and defines cleanup in blanczos64.c
-
-8/22/05 (relf)
-  * Minor header fixes and cleanups
-  * Applied Dmitri Gribenko's patches to Makefiles (w/ minor postfixes)
-  * Makefile.ppc and Makefile.x86_64 now joined into Makefile since
-    they do generic things while Makefile.x86 does x86-specific things
-  * TODO: make single Makefiles for all targets
-
-8/20/05 (relf)
-  * example pol5/rsa512* moved to tests/rsa512_pol5/
-  * lasieve4/piii/mpsq-hack.c moved to lasieve4/mpqs.c and shared
-  * x86_64 siever now works
-  * x86_64 assembler code is added to gnfs-lasieve4e.c (but it seems pointless)
-
-8/19/05 (asl)
-  * Renamed BIGENDIAN define to GGNFS_BIGENDIAN due to collision with
-    winsock2.h
-
-8/19/05 (Brian Gladman)
-  * Lots of changes to restore broken VC++ compilation
-
-8/19/05 (relf)
-  * common code from lasieve4/ and pol5/ moved to src/ and shared
-  * extra types definitions removed in favor of #including ggnfs.h
-  * pol5 fixed with respect to suppost non-i386 platforms
-  * most "(unsigned) long long" types changed to "(u)int64_t"
-  * TODO: unify used types, e.g., use the same name for "u64", "u64_t", "uint64_t" etc.
-  * compiled binaries are placed in bin/ directory
-
-8/18/05 (asl)
-  * Added some small snfs_test. tst250 runs something about 30 mins for me,
-    so some quick test is required (F7 is still broken :)
-    Thanks to Dmitriy Gribenko for .poly file.
-  * Applied matbuild fixes to matbuild-tpie.
-
-8/18/05 (trilliwig)
-  * Updated Perl script to properly handle the knowndiv option from the
-    .poly file when checking if sqrt has found all the prime divisors of N.
-  * Removed include/version.h from repository.  A 'make' from the top-level
-    directory should recreate it.
-
-8/17/05 (asl)
-  * Fixed mingw32 miscompilation.
-
-8/17/05 (relf)
-  * "out-of-box" support for x86_64 target
-  * target can be specified in the master Makefile
-  * fixed some minor problem with makefiles
-  * some missed #include's recovered
-  * major problems w/ gcc 4.0 compilation resolved
-  * extra "%l" specificators removed
-  * type conversion applied to printf() arguments where required
-  * implicit function declarations made explicit
-  * other minor issues fixed
-
-8/15/05 (frmky)
-  * Fixed a small typo in combparts_tpie.cpp.
-
-8/12/05 (asl)
-  * Fixed mingw32 miscompilation.
-  * Changed "%lu" to PRIu32.
-  * Integrated matbuild-tpie experimental package. Please read
-    matbuild-tpie.txt in the experimental/ directory.
-  * Some changes in optimization parameters. Added -ffast-math and
-    increased function size for inlining. Got some speed-up.
-
-8/10/05 (Brian Gladman)
-  * Updated various files to repair the broken VC++ compilation
-  * Added VC++ inline assembler to blanczos64.c
-
-7/20/05 (asl)
-  * Fixed some boundary cross bug in combinedSize().
-
-7/17/05 (trilliwig)
-  * Converted sources to use standard C9x int types defined in inttypes.h.
-    Corrected a number of format specifiers for printf/scanf.  Changed
-    a couple types here and there to correct possible problems.
-  * Added check that the aligned memory functions actually return aligned
-    memory in the MMX Lanczos code.
-
-7/14/05 (trilliwig)
-  * Patched factLat.pl so it automatically applies more generous parameters
-    for SNFS factorizations where the polynomial degree is not optimal.
-  * Reorganized mpz_fact_factorEasy() so the control flow makes more sense
-    and doesn't repeat operations like trial division unnecessarily.
-
-7/12/05 (trilliwig)
-  * Updated mpz_fact_factorEasy() to check for higher multiplicity of prime
-    factors above the trial division limit.  The DISC_P_DIV lines in
-    ggnfs.log will also be written/interpreted accordingly.  This should
-    fix some instances where procrels did not factor the discriminant of the
-    polynomial as well as it could.
-  * Added .params to the list of files cleaned in the gnfs-template Makefile.
-
-7/9/05 (jasonp_sf)
-  * Free unneeded arrays before the classical siever starts; reduces
-    memory use by more than half for large factorizations
-  * For the classical siever, set up each large factor base prime for
-    the next sieve line immediately after the prime is used. Also
-    collapse some operations scanning the sieve array. These two combine
-    for a small speedup (~5%).
-
-7/6/05 (frmky)
-  * Applied a patch by Jason Papadopoulos to the classical sieve to fix an
-    incorrect initialization when the factor base is very small (under
-    65536).
-
-7/5/05 (trilliwig)
-  * Moved crossover for the Kleinjung/Franke poly tool a little lower, so
-    Monico's poly tool doesn't try to make a quintic poly for 98-99 digit
-    numbers.  Added Kleinjung/Franke parameters for 98-99 digits.
-
-7/3/05 (trilliwig)
-  * Used suggestion by G.W. Reynolds to raise murphymax values for pol5 to
-    avoid memory issues in pol51opt.  It should have the added bonus of
-    getting to the good polynomials faster.  However, there are still many
-    instances remaining where pol51m0b dies with the message "lambda-comp"
-    or "ull5a5p-comp".
-  * Moved -wt option help text from matsolve to matbuild.  Also updated the
-    Perl script to use the -wt option with matbuild, not matsolve.  Allowed
-    "matsolve --help" to print help text if a depinf file does not exist.
-  * Added support in the Perl script of lss and mrif parameters in the .poly
-    file.  They correspond to $LATSIEVE_SIDE and $maxRelsInFF settings.
-  * Tweaked some Makefiles so I don't always have to edit them extensively
-    to use them in my environment. :)
-
-7/2/05 (frmky)
-  * Modified makesymlinks.sh to restore execute permissions to
-    src/autogplot.sh and tests/factLat.pl
-  * Applied a patch by Jason Papadopoulos to fix potential problems with
-    64-bit 'a' values.
-
-6/30/05 (trilliwig)
-  * Smoothed out polynomial selection times for GNFS factorizations from 100
-    to 135 digits.  The new default times range from 30 minutes for 100-digit
-    factorizations to about 2 days for 135-digit factorizations.  The times
-    for 136-155 digit factorizations are pegged at 2 days for now.  We don't
-    actually expect people to use the script anyway for GNFS factorizations
-    that large.
-
-6/26/05 (frmky)
-  * Added makesymlinks.sh to recreate the missing symbolic links after
-    a CVS checkout.
-
-6/26/05 (asl)
-  * Applied some patches by Jason Papadopoulos to classic siever .
-  * Fixed missing -wt command line flag for matbuild reported by G.W.Reynolds.
-
-6/25/05 (trilliwig)
-  * Added factorbase sizes and number of large primes encountered to summary
-    file.
-
-6/19/05 (trilliwig)
-  * Fixed typo in error message in the lattice siever.
-  * Applied Makoto Kamada's patch to suppress warnings in Miller-Rabin
-    code if the Perl interpreter does not support 64-bit integers.
-  * If M, Y1, and Y0 are all specified in the .poly file, the script
-    will now properly use Y1 and Y0 to calculate the SNFS difficulty.
-    It will also properly handle negative evaluated polynomial values.
-  * Added much more paranoia in polynomial checking in the Perl script.
-    It can be disabled by setting $CHECK_POLY to 0.
-  * Added support for lattice sieving on the rational side.  This is
-    controlled by the $LATSIEVE_SIDE setting.
-  * Added some interesting information to the summary file.
-  * Add client id to $PNUM, so if multiple clients are lattice sieving
-    in the same directory, they don't all write to the same .last_spq*
-    file.
-  * Added Geoffrey Reynold's fix for bug when classical sieving is not
-    done in multi-client mode.
-  * Fixed runPol5() so it tolerates abnormal exits in the polynomial
-    search programs.
-
 6/12/05 (asl)
   * Extended 'a' field of relations to 64 bit. This seems to be enough
     to all decent middle-size factorizations. Big thanks to Andrei Belenko
@@ -505,8 +110,8 @@
     to have broken it in the process (possibly because I applied
     the patch he send on 3/2/05 to the latest source tree which
     may have had too many changes and confused 'patch').
-  * Removed the tests/F7 and tests/tst150 directories since the
-    scripts in them were broken and I don't necessarily feel like
+  * Removed the tests/F7 and tests/tst150 directories since the 
+    scripts in them were broken and I don't necessarily feel like 
     fixing.
 
 0.75.0, 3/24/05
@@ -736,7 +341,7 @@
     mpqs-hack.c fix, and some mods to the Perl script so it can
     report the commands that are being issued.
   * Changed the default value of maxRelsInFF in the Perl script
-    from 40 to 32, to give (by default) slightly sparser matrices
+    from 40 to 32, to give (by default) slightly sparser matrices 
     at the expense of a little extra sieving.
 
 0.72.5, 12/18/04
@@ -776,7 +381,7 @@
   * Sam pointed out that lpF.numFiles should be initialized to
     zero, not 4.
   * Included some more of Mark's patches for PPC compilation.
-
+   
 
 0.72.2, 12/14/04
   * Increased MAX_RAT_FACTORS, MAX_ALG_FACTORS and MAX_SP_FACTORS :
@@ -838,7 +443,7 @@
   * Added a snippet to procrels.c to detect the condition when
     there are no valid relations after addNewRelations5() has been
     called. This happens as a result of bad parameter choices or
-    invalid usage; previously, this would result in a segfault -
+    invalid usage; previously, this would result in a segfault - 
     now, a brief message is printed follwed by a graceful exit.
   * Some changes to runPolyselect() in the Perl script, so that it's
     a bit smarter about honing in on particular ranges of coefficient
@@ -853,7 +458,7 @@
     for VC compilation. While I was in there, though, I removed
     some unused junk leftover from an earlier hack of this file.
   * Included new VC project files from Brian.
-  * Started including Mark R.'s changes for PPC compilation -
+  * Started including Mark R.'s changes for PPC compilation - 
     he's taking it easy on me and sending the required changes
     in increments, so it will be a while before all the necessary
     stuff is in here for an actual PPC compile.
@@ -960,14 +565,14 @@
     sieve on several machines at once. This hack is very temporary,
     untested so far, and I don't encourage using it! If it doesn't
     work right for you, I will accept suggestions for a fix, but I
-    won't track down bugs byself, since it's only intended to be a
+    won't track down bugs byself, since it's only intended to be a 
     temporary hack. A longterm method will have to be far more robust.
     Note: this hack assumes a reasonably homogenous network of
     machines - it just blindly divides sieving regions up equally.
 
 0.70.8, 12/1/04
   * Added Greg's tweak to the Perl script to allow the non-monic
-    linear polynomial. Ran it with his test case, and everything
+    linear polynomial. Ran it with his test case, and everything 
     worked fine.
   * One more fix for Cyg compilation.
 
@@ -1045,8 +650,8 @@
       When the table of parameters is refined and completed, this should
     make the software much easier to run. Everything is still fine
     tuneable by the advanced user (the default parameters are always
-    selected, and then overridden by any user-supplied parameters).
-      One change in the script that will affect everyone is that there is
+    selected, and then overridden by any user-supplied parameters). 
+      One change in the script that will affect everyone is that there is 
     a new field which must be in the poly file:
       type: <gnfs|snfs>
     In a couple of places, it is convenient for the script to know if this
@@ -1059,7 +664,7 @@
     easily decide if one set of parameters is better than those in the table
     (this table will be very dynamic for a while, as it will take much testing
     to determine the best parameter choices on average).
-  * In an earlier release, I made a change I forgot to document.
+  * In an earlier release, I made a change I forgot to document. 
     matsolve now spits out a number it calls 'matrix difficulty'.
     This number represents, oddly enough, the difficulty of solving
     the resulting matrix. It is a function of both the matrix size,
@@ -1206,8 +811,8 @@
     by giving -march=athlon (for procrels, at least). Of course, this won't
     speed up the lattice siever since it's already assembly coded, but at
     least a little boost for relation processing is worth it.
-    This probably means its time for a proper configure script, but I
-    don't have time for that yet. In the meantime, I added a
+    This probably means its time for a proper configure script, but I 
+    don't have time for that yet. In the meantime, I added a 
     Makefile.athlon for this. I suspect that various pentium flags may also
     help, so you may want to experiment with this.
 
@@ -1224,7 +829,7 @@
     The next step is to carefully go through the code and see what
     really needs to be s32 and what can be u32 (i.e., in all post-sieving
     code, so that we can handle large primes upto 32 bits).
-
+    
 
 0.60.5-unstable, 10/21/04
   * Fixed up the 64-bit Lanczos code. It still needs to be cleaned
@@ -1264,7 +869,7 @@
 
 0.60.1-unstable, 10/14/04
   * Fixed a naughty little bug that caused a miscount of the
-    total number of large primes in procrels (net result was a
+    total number of large primes in procrels (net result was a 
     memory allocation error).
 
 0.60-unstable, 10/13/04
@@ -1275,7 +880,7 @@
     I should probably consider asking someone (Brian :) to keep a copy
     of the VC files somewhere else and I'll link to them. What keeps happening
     is that by the time I get to include the updates, I've already changed
-    things so that they are broken by the time they get included.
+    things so that they are broken by the time they get included. 
   * I finally started debugging the lasieve/lambda problem. My suspicion
     was (of course :) right, that it was crashing when it attempted to
     MPQS a leftover norm. Most likely, this is due to some error on my
@@ -1310,7 +915,7 @@
         with the ability to control several nodes. This will require some level
         of network communication capabilities which Perl has but Bash does not
         (at least, not via any reasonably clean techniques that I know).
-    (4) I want to learn Perl. Not a bad start I think, though I'm sure
+    (4) I want to learn Perl. Not a bad start I think, though I'm sure 
         I broke some style rules.
     (5) It should be a transparent change for Linux users since we all
         have Perl anyway. So why not?
@@ -1337,7 +942,7 @@
     I'm not yet done - I've only done the disk writing so far (which is
     the easy part :)
   * Modified the factLat.pl script to also kick out a jpeg showing the FF's as
-    a function of the total relations.
+    a function of the total relations. 
   * (MAJOR CHANGE) : The old `getdeps' program and source file are now called
     `procrels', which makes far more sense. The old name, getdeps, was a reminant
     from the early days of GGNFS when this program did both relation processing
@@ -1358,7 +963,7 @@
     stuff should be in one file, so I combined the needed parts
     of spmatmul.c into blanczos32.c and removed spmatmul.c.
     Note that the directory with the VC files has changed from
-    vc_project to ggnfs.vc.)
+    vc_project to ggnfs.vc.) 
    (Nope - it's fixed now. I sent it to Brian first and he updated
     the files).
   * Added a new parameter, `examinefrac', to the polyselect input
@@ -1409,12 +1014,12 @@
       RL->maxDataSize = fileInfo.st_size;
     should be
       RL->maxDataSize = fileInfo.st_size / sizeof(long);
-
+                                                                                              
     Description:
     There is a mismatch of the unit between source and destination.
       (src) fileInfo.st_size ... bytes
       (dst) RL->maxDataSize ... longs
-
+                                                                                             
     Result:
     After the correction, large waste memory -- more than 300MB? -- has been saved.
 
@@ -1423,7 +1028,7 @@
           bufSize += fread(&buf[bufSize], sizeof(long), bufMax-bufIndex-10, fp);
     should be
           bufSize += fread(&buf[bufSize], sizeof(long), bufMax-bufSize, fp);
-
+                                                                                             
     Description:
     It's a simple mistake. fread() overruns memory blocks and causes segfaults on
 Cygwin.
@@ -1491,7 +1096,7 @@ Cygwin.
            emb: -60.38 -47.55 -47.55 -35.17 -35.17 , diff=- 0.0000
     Here, the final quantity is the one I'm talking about. It _should_ always
     stay fairly close to zero, but it sometimes jumps after the first iteration.
-    This seems to indicate that somewhere we are dividing or multiplying
+    This seems to indicate that somewhere we are dividing or multiplying 
     by a different ideal than we adjust the exponents by.)
 
 0.53.2, 8/21/04
@@ -1522,9 +1127,9 @@ Cygwin.
     point to allow the script to send job files to worker nodes
     via sockets. This is not high on my priority list at the moment,
     but it is fairly easy to do from the server side, given the current
-    script. It also shouldn't take much work on the client side.
-    It would just be a matter of adding a few lines of code to the siever to
-    query a server for a job file (if run in client mode).
+    script. It also shouldn't take much work on the client side. 
+    It would just be a matter of adding a few lines of code to the siever to 
+    query a server for a job file (if run in client mode). 
     If it gets one, dump it to file and everything proceeds as normal.
     If it did not get one, the siever will shutdown, after complaining
     about not finding a job file. The hard part of this will be getting
@@ -1535,6 +1140,7 @@ Cygwin.
 
 0.53.0, 8/16/04
   * KAMADA Makoto submitted another patch which fixed the serious
-    Cygwin bug and further sped up addNewRelations4() by another
+    Cygwin bug and further sped up addNewRelations4() by another 
     18% or so. Many thanks to Makoto for his hard work in tracking
     that bug down and speeding up the various functions in getdeps.c.
+

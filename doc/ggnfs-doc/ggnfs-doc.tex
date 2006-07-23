@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage{amsmath,amssymb}
-%\usepackage{fancybox}\usepackage{epsfig}\usepackage{psfig}
+\usepackage{fancybox}\usepackage{epsfig}\usepackage{psfig}
 %\usepackage{showkeys}
 \textwidth 6.5in\oddsidemargin 0in
 \textheight 9in\topmargin -0.5in
@@ -504,7 +504,7 @@
   computer code than mathematics.
 
   As usual, suppose $N$ is the composite number to be factored.
-  Let $c_0+c_1x+\cdots c_dx^d = f(x)\in\Z[x]$ be a 
+  Let $c+0+c_1x+\cdots c_dx^d = f(x)\in\Z[x]$ be a 
   (not necessarily monic) polynomial of degree $d$
   so that $f(m)=cN$ for some small nonzero integer $c$ and some
   $m\in\Z$. We assume $f$ to be irreducible - for in the unlikely
@@ -525,7 +525,7 @@
   $N$ by simply computing $\Z_\K$. Usually the former case is
   true (in fact, {\tt GGNFS} does not even check for the latter
   case as it is extremely unlikely for numbers $N$ with even 40
-  digits). The reason for taking $\hat{\alpha}$ instead of $\alpha$
+  digits). The reason for taking $\hat{alpha}$ instead of $\alpha$
   is quite simply that, in general, $\alpha$ will not be an algebraic
   integer, and later computations are most easily done with respect
   to an integral basis - so we can avoid fractional arithmetic

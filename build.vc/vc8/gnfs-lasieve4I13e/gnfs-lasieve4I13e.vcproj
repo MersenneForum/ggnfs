@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="gnfs-lasieve4I13e"
 	ProjectGUID="{41DDD9A9-2E07-47F6-9AFC-6083470E8CFB}"
 	RootNamespace="gnfs-lasieve4I13e"
 	Keyword="Win32Proj"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -23,14 +24,14 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist ..\..\..\include\version.h (echo #define GGNFS_VERSION &quot;0.77.1-VC8(%DATE%)&quot; &gt;..\..\..\include\version.h)&#x0D;&#x0A;set Wd=..\..\..\src\lasieve4&#x0D;&#x0A;if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)&#x0D;&#x0A;call ..\file_copy %Wd%\piii\siever-config.h %Wd%\asm\siever-config.h&#x0D;&#x0A;if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\asm\32bit.h)&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -50,19 +51,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;I_bits=13;"
+				AdditionalIncludeDirectories="..\;..\..\..\include;..\..\..\src"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;I_bits=13;ASM_MPQS_SIEVER;ASM_MPQS_EVAL;ASM_MPQS_TD"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -75,7 +72,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -106,19 +103,19 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="x64\$(ConfigurationName)"
+			IntermediateDirectory="x64\$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist ..\..\..\include\version.h (echo #define GGNFS_VERSION &quot;0.77.1-VC8(%DATE%)&quot; &gt;..\..\..\include\version.h)&#x0D;&#x0A;set Wd=..\..\..\src\lasieve4&#x0D;&#x0A;if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)&#x0D;&#x0A;call ..\file_copy %Wd%\ppc32\siever-config.h %Wd%\asm\siever-config.h&#x0D;&#x0A;call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -139,19 +136,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src"
+				AdditionalIncludeDirectories="..\;..\..\..\include;..\..\..\src"
 				PreprocessorDefinitions="_DEBUG;_CONSOLE;I_bits=13;WIN64;__x86_64__;GGNFS_HOST_GENERIC"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -164,7 +157,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -195,19 +188,19 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist ..\..\..\include\version.h (echo #define GGNFS_VERSION &quot;0.77.1-VC8(%DATE%)&quot; &gt;..\..\..\include\version.h)&#x0D;&#x0A;set Wd=..\..\..\src\lasieve4&#x0D;&#x0A;if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)&#x0D;&#x0A;call ..\file_copy %Wd%\piii\siever-config.h %Wd%\asm\siever-config.h&#x0D;&#x0A;if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\asm\32bit.h)&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -226,22 +219,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;I_bits=13;"
+				AdditionalIncludeDirectories="..\;..\..\..\include;..\..\..\src"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;I_bits=13;ASM_MPQS_SIEVER;ASM_MPQS_EVAL;ASM_MPQS_TD"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -254,10 +239,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -286,19 +271,19 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="x64\$(ConfigurationName)"
+			IntermediateDirectory="x64\$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist ..\..\..\include\version.h (echo #define GGNFS_VERSION &quot;0.77.1-VC8(%DATE%)&quot; &gt;..\..\..\include\version.h)&#x0D;&#x0A;set Wd=..\..\..\src\lasieve4&#x0D;&#x0A;if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)&#x0D;&#x0A;call ..\file_copy %Wd%\ppc32\siever-config.h %Wd%\asm\siever-config.h&#x0D;&#x0A;call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -318,19 +303,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src"
+				AdditionalIncludeDirectories="..\;..\..\..\include;..\..\..\src"
 				PreprocessorDefinitions="NDEBUG;_CONSOLE;I_bits=13;WIN64;__x86_64__;GGNFS_HOST_GENERIC"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -343,7 +323,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -375,7 +355,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin"
 			/>
 		</Configuration>
 	</Configurations>
@@ -682,7 +662,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\if.h"
+				RelativePath="..\if.h"
 				>
 			</File>
 			<File

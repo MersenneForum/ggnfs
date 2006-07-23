@@ -1,59 +1,85 @@
-BINDIR=../../bin
-INC=-I.. -I../../include $(LOCALINC)
-LIBFLAGS=$(LOCALLIB)
-LIBS=-lm -lgmp
-CFLAGS2=
 
-# passed in from higher-level directory now
-#CFLAGS = -Wall -O2 -I/usr/local/include
+CC = gcc 
+CFLAGS = -Wall -O2 -g
+LIBFLAGS = -I. -I/usr/local/include -L/usr/local/lib
+LIBS       = -lm -lgmp
+LIBSPARI       = -lm -lgmp -lpari
 #CFLAGS = -g -Wall -Wno-implicit
-#LIBFLAGS = -I. -I/usr/local/include -L/usr/local/lib
 
 POL5_SOURCEFILES = fnmatch.c pol51m0b.c pol51m0n.c pol51opt.c \
-  ../if.c ../if.h assess.c primes.c roots.c zeit.c dickman.tab \
+  if.c if.h assess.c primes.c roots.c zeit.c dickman.tab \
   asm_hash5.asm asm_hash5n.asm asm_rs.asm \
   asm_hash5.s asm_hash5n.s asm_rs.s \
   asm_hash5_alpha.s asm_hash5n_alpha.s \
   Example Readme parameters rsa512.data
 
-BINS=$(BINDIR)/pol51m0b $(BINDIR)/pol51m0n $(BINDIR)/pol51opt
-
-OBJS=../if.o zeit.o fnmatch.o primes.o assess.o roots.o ../lasieve4/mpz-ull.o
-OBJS2=
-OBJS3=
-OBJS4=
-
-ifeq ($(HOST),x86)
-# if not using GCC 3.4, you may remove the -O0
-	CFLAGS2+=-O0 -DHAVE_FLOAT64 -DHAVE_ASM_INTEL
-	OBJS2=asm_hash5.o
-	OBJS3=asm_hash5n.o
-	OBJS4=asm_rs.o
-endif
-
-ifeq ($(HOST),alpha)
-	CFLAGS2+=-DHAVE_ASM_ALPHA
-	OBJS2=asm_hash5_alpha.o
-	OBJS3=asm_hash5n_alpha.o
-endif
+BINS=pol51m0b pol51m0n pol51opt
+BINS_INTEL=pol51m0b-intel pol51m0n-intel pol51opt-intel
 
 all: $(BINS)
+intel: $(BINS_INTEL)
 
-%.o: %.c ../if.h
-	$(CC) $(INC) -c $(CFLAGS) $(CFLAGS2) -o $@ $<
+%.o: %.c if.h
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 %.o: %.s
-	$(CC) $(INC) -c $(CFLAGS) $(CFLAGS2) $^
+	$(CC) -c $(CFLAGS) $^
 
-$(BINDIR)/pol51m0b: pol51m0b.o $(OBJS) $(OBJS2)
-	$(CC) $(INC) -o $@ $(CFLAGS) $(CFLAGS2) $^ $(LIBFLAGS) $(LIBS)
+%.s: %.asm
+	gasp -c '#' -o $@ $^
 
-$(BINDIR)/pol51m0n: pol51m0n.o $(OBJS) $(OBJS3)
-	$(CC) $(INC) $(CFLAGS) $(CFLAGS2) -o $@ $^ $(LIBFLAGS) $(LIBS)
+pol51m0b: pol51m0b.o if.o zeit.o fnmatch.o
+	$(CC) -o pol51m0b $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
 
-$(BINDIR)/pol51opt: pol51opt.o $(OBJS) $(OBJS4)
-	$(CC) $(INC) $(CFLAGS) $(CFLAGS2) -o $@ $^ $(LIBFLAGS) $(LIBS)
+pol51m0b-intel.o: pol51m0b.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_FLOAT64 -DHAVE_ASM_INTEL -o $@ $<
+
+zeit-intel.o: zeit.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_ASM_INTEL -o $@ $<
+
+zeit-alpha.o: zeit.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_ASM_ALPHA -o $@ $<
+
+pol51m0b-alpha.o: pol51m0b.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_ASM_ALPHA -o $@ $<
+
+pol51m0b-intel: pol51m0b-intel.o if.o zeit-intel.o asm_hash5.o fnmatch.o
+	$(CC) -o pol51m0b-intel $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+pol51m0b-alpha: pol51m0b-alpha.o if.o zeit-alpha.o asm_hash5_alpha.o
+	$(CC) -o pol51m0b-alpha $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+pol51m0n: pol51m0n.o if.o fnmatch.o zeit.o
+	$(CC) -o pol51m0n $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+pol51m0n-intel.o: pol51m0n.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_FLOAT64 -DHAVE_ASM_INTEL -o $@ $<
+
+pol51m0n-alpha.o: pol51m0n.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_ASM_ALPHA -o $@ $<
+
+pol51m0n-intel: pol51m0n-intel.o if.o zeit-intel.o fnmatch.o asm_hash5n.o
+	$(CC) -o pol51m0n-intel $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+pol51m0n-alpha: pol51m0n-alpha.o if.o zeit-alpha.o asm_hash5n_alpha.o
+	$(CC) -o pol51m0n-alpha $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+
+
+pol51opt: pol51opt.o if.o fnmatch.o primes.o assess.o roots.o zeit.o
+	$(CC) -o pol51opt $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+pol51opt-intel.o: pol51opt.c if.h
+	$(CC) -c $(CFLAGS) -DHAVE_ASM_INTEL -o $@ $<
+
+pol51opt-intel: pol51opt-intel.o if.o primes.o assess.o roots.o zeit-intel.o fnmatch.o asm_rs.o
+	$(CC) -o pol51opt-intel $(CFLAGS) $^ $(LIBFLAGS) $(LIBS)
+
+
+
+dist:
+	tar cO $(POL5_SOURCEFILES) \
+	Makefile | gzip --best --stdout > pol5.tar.gz
 
 clean : ;
-	rm -f $(BINS) *.o core
-
+	rm -f $(BINS) $(BINS_INTEL) *.o core

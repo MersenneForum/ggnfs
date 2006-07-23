@@ -13,7 +13,6 @@
   02111-1307, USA.
 */
 
-#include <assert.h>
 #include <math.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -21,11 +20,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#else
 #if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
 #include <malloc.h>
 #endif
-
+#include "asm/lasieve-asm.h"
+#endif
 #include "lasieve.h"
 
 #ifdef DEBUG
@@ -103,7 +105,7 @@ u32_t nextprime32(pr32_struct * ps)
       ps->Prime += 2 * ps->PDiffs[ps->Pind++];
       return ps->Prime;
     } else {
-      if (ps->first_in_sieve < UINT_MAX - 2 * P32_SIEVESIZE) {
+      if (ps->first_in_sieve < U32_MAX - 2 * P32_SIEVESIZE) {
         ps->first_in_sieve += 2 * P32_SIEVESIZE;
 
         {
@@ -117,13 +119,11 @@ u32_t nextprime32(pr32_struct * ps)
           }
           memset(sieve, 1, P32_SIEVESIZE);
 
-          if (ps->first_in_sieve < UINT_MAX - 2 * P32_SIEVESIZE)
+          if (ps->first_in_sieve < U32_MAX - 2 * P32_SIEVESIZE)
             ssz = P32_SIEVESIZE;
           else
-            ssz = (UINT_MAX - ps->first_in_sieve) / 2;
-
-		  assert((1 + floor(sqrt(ps->first_in_sieve + 2 * ssz))) <= UINT_MAX);
-          M = (u32_t)(1 + floor(sqrt(ps->first_in_sieve + 2 * ssz)));
+            ssz = (U32_MAX - ps->first_in_sieve) / 2;
+          M = 1 + floor(sqrt(ps->first_in_sieve + 2 * ssz));
           for (i = 2, q = 3; q <= M; q += 2 * primediffs[i++]) {
             j = ps->first_in_sieve % q;
             if (j) {
@@ -189,9 +189,7 @@ u32_t nextprime32(pr32_struct * ps)
 
       oldprime = ps->Prime;
       start = oldprime + 2;
-
-	  assert((1 + floor(sqrt(start + 2 * P32_SIEVESIZE))) <= UINT_MAX);
-      M = (u32_t)(1 + floor(sqrt(start + 2 * P32_SIEVESIZE)));
+      M = 1 + floor(sqrt(start + 2 * P32_SIEVESIZE));
       for (i = 2, q = 3; q <= M; q += 2 * primediffs[i++]) {
         j = start % q;
         if (j) {
@@ -246,13 +244,11 @@ u32_t nextprime32(pr32_struct * ps)
       }
       memset(sieve, 1, P32_SIEVESIZE);
 
-      if (ps->first_in_sieve < UINT_MAX - 2 * P32_SIEVESIZE)
+      if (ps->first_in_sieve < U32_MAX - 2 * P32_SIEVESIZE)
         ssz = P32_SIEVESIZE;
       else
-        ssz = (UINT_MAX - ps->first_in_sieve) / 2;
-
-	  assert((1 + floor(sqrt(ps->first_in_sieve + 2 * ssz))) <= UINT_MAX);
-      M = (u32_t)(1 + floor(sqrt(ps->first_in_sieve + 2 * ssz)));
+        ssz = (U32_MAX - ps->first_in_sieve) / 2;
+      M = 1 + floor(sqrt(ps->first_in_sieve + 2 * ssz));
       for (i = 2, q = 3; q <= M; q += 2 * primediffs[i++]) {
         j = ps->first_in_sieve % q;
         if (j) {
@@ -323,13 +319,11 @@ u32_t pr32_seek(pr32_struct * ps, u32_t lb)
     }
     memset(sieve, 1, P32_SIEVESIZE);
 
-    if (ps->first_in_sieve < UINT_MAX - 2 * P32_SIEVESIZE)
+    if (ps->first_in_sieve < U32_MAX - 2 * P32_SIEVESIZE)
       ssz = P32_SIEVESIZE;
     else
-      ssz = (UINT_MAX - ps->first_in_sieve) / 2;
-
-	assert((1 + floor(sqrt(ps->first_in_sieve + 2 * ssz))) <= UINT_MAX);
-    M = (u32_t)(1 + floor(sqrt(ps->first_in_sieve + 2 * ssz)));
+      ssz = (U32_MAX - ps->first_in_sieve) / 2;
+    M = 1 + floor(sqrt(ps->first_in_sieve + 2 * ssz));
     for (i = 2, q = 3; q <= M; q += 2 * primediffs[i++]) {
       j = ps->first_in_sieve % q;
       if (j) {

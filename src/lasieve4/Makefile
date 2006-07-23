@@ -1,5 +1,5 @@
 # Copyright (C) 2001,2002 Jens Franke
-# This file is part of gnfs4linux, distributed under the terms of the
+# This file is part of gnfs4linux, distributed under the terms of the 
 # GNU General Public Licence and WITHOUT ANY WARRANTY.
 
 # You should have received a copy of the GNU General Public License along
@@ -9,65 +9,83 @@
 #
 # 6/13/04: Hacked up for use in GGNFS by Chris Monico.
 
-INC=-I.. -I../../include $(LOCALINC)
-LIBFLAGS=-L. $(LOCALLIB)
-CFLAGS+=-Os
+CFLAGS= -O3 -Wall
+#CFLAGS= -g -Wno-strict-aliasing
+CC=gcc $(CFLAGS)
+MAKE=make
 
-BINDIR=../../bin
 FACT=prho.o
+all : gnfs-lasieve4I12e gnfs-lasieve4I13e gnfs-lasieve4I14e
+
 .SUFFIXES:
 
 .SECONDARY: *.c *.o
 
-.PHONY: all clean
+SRCFILES=fbgen.c gnfs-lasieve4e.c input-poly.c mpz-ull.c real-poly-aux.c redu2.c \
+         gmp-aux.c if.c lasieve-prepn.c primgen32.c recurrence6.c lasieve.h asm/siever-config.c 
 
-SRCFILES=fbgen.c gnfs-lasieve4e.c input-poly.c mpqs.c mpz-ull.c \
-         real-poly-aux.c redu2.c gmp-aux.c if.c lasieve-prepn.c \
-	 primgen32.c recurrence6.c lasieve.h asm/siever-config.h
-
-OBJS=../if.o input-poly.o redu2.o recurrence6.o ../fbgen.o \
-     real-poly-aux.o primgen32.o lasieve-prepn.o mpqs.o
-
-LIBS=-lgmp-aux -lgmp -lm
-
-ASMDIRS=piii ppc32 itanium generic mips
+ASMDIRS=piii itanium generic mips
 
 list_asm_files = \
-     $(foreach file, $(shell make -s -C $(asm_dir) bup),$(asm_dir)/$(file))
+	$(foreach file, $(shell make -s -C $(asm_dir) bup),$(asm_dir)/$(file))
 
 ASMFILES=$(foreach asm_dir,$(ASMDIRS),$(list_asm_files))
 
-all : $(BINDIR)/gnfs-lasieve4I12e $(BINDIR)/gnfs-lasieve4I13e \
-      $(BINDIR)/gnfs-lasieve4I14e
-
-asm/%:
+asm/%:	force
 	$(MAKE) -C asm $*
 
-%.o: %.c lasieve.h asm/siever-config.h
-	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
+%.o: %.c lasieve.h asm/lasieve-asm.h
+	$(CC) -c -o $@ $<
 
 %.o: %.s
-	$(CC) $(INC) -c $^
+	$(CC) -c $^
+
+.PHONY:	force
+
+input-poly.o: lasieve.h
+
+fbgen.o: lasieve.h
+
+recurrence6.o: recurrence6.c lasieve.h asm/lasieve-asm.h
+	$(CC) -c -o $@ $<
+
+redu2.o: lasieve.h
+
+primgen32.o fbgen.o: lasieve.h
+
+gnfs-lasieve4eI12.o: gnfs-lasieve4e.c lasieve.h asm/lasieve-asm.h 
+	$(CC) -c -DI_bits=12 -o $@ $<
+
+gnfs-lasieve4eI13.o: gnfs-lasieve4e.c lasieve.h asm/lasieve-asm.h 
+	$(CC) -c -DI_bits=13 -o $@ $<
+
+gnfs-lasieve4eI14.o: gnfs-lasieve4e.c lasieve.h asm/lasieve-asm.h  
+	$(CC) -c -DI_bits=14 -o $@ $<
 
 libgmp-aux.a: gmp-aux.o mpz-ull.o
 	$(AR) rcs $@ $^
 
-gnfs-lasieve4eI%.o: gnfs-lasieve4e.c lasieve.h asm/siever-config.h
-	$(CC) $(CFLAGS) $(INC) -c -DI_bits=$* -o $@ $<
+lasieve-prepn.o: lasieve.h
 
-$(BINDIR)/gnfs-lasieve4I%e: gnfs-lasieve4eI%.o $(OBJS) libgmp-aux.a \
-                             asm/liblasieve.a asm/liblasieveI%.a $(FACT)
-	$(CC) $(CFLAGS) $(INC) $(LIBFLAGS) -o $@ $^ $(LIBS)
+gnfs-lasieve4I12e: gnfs-lasieve4eI12.o if.o input-poly.o redu2.o \
+	recurrence6.o fbgen.o real-poly-aux.o \
+	primgen32.o libgmp-aux.a lasieve-prepn.o \
+	asm/liblasieve.a asm/liblasieveI12.a $(FACT)
+	$(CC)  -o $@ $^ -lgmp -lm
 
-asm/lib%.a:
-	$(MAKE) -C asm
+gnfs-lasieve4I13e: gnfs-lasieve4eI13.o if.o input-poly.o redu2.o \
+	recurrence6.o fbgen.o real-poly-aux.o \
+	primgen32.o libgmp-aux.a lasieve-prepn.o \
+	asm/liblasieve.a asm/liblasieveI13.a $(FACT)
+	$(CC) -o $@ $^ -lgmp -lm
 
-clean:
-ifeq ($(OS),Windows_NT)
-	-rm -f *.o *.a $(BINDIR)/gnfs-lasieve4I1?e.exe
-else
-	-rm -f *.o *.a $(BINDIR)/gnfs-lasieve4I1?e
-endif
-	(test -d asm && $(MAKE) -C asm clean) || exit 0
-		
+gnfs-lasieve4I14e: gnfs-lasieve4eI14.o if.o input-poly.o redu2.o \
+	recurrence6.o fbgen.o real-poly-aux.o \
+	primgen32.o libgmp-aux.a lasieve-prepn.o \
+	asm/liblasieve.a asm/liblasieveI14.a $(FACT)
+	$(CC) -o $@ $^ -lgmp -lm
+
+clean : ;
+	rm -f *.o *.a gnfs-lasieve4I1?e 
+	make -C asm clean
 

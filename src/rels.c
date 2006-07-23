@@ -19,17 +19,11 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4996) /* warning C4996: 'function' was declared deprecated */
-#endif
-
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <gmp.h>
-#include <limits.h>
 #include "ggnfs.h"
 
 #define FB_TRIAL_DIV_FRAC 0.35
@@ -65,7 +59,7 @@
   #define SETNUMSPB(_s,_n) (_s = (_s&0xFFFF00FF)^((((s32)(_n)&0x000000FF)<<8)))
   #define SETNUMLRP(_s,_n) (_s = (_s&0xFFFFFF3F)^((((s32)(_n)&0x00000003)<<6)))
   #define SETNUMLAP(_s,_n) (_s = (_s&0xFFFFFFCF)^((((s32)(_n)&0x00000003)<<4)))
-  #define S32S_IN_ENTRY(_s) (2*GETNUMRFB(_s)+2*GETNUMAFB(_s)+2*GETNUMSPB(_s)+GETNUMLRP(_s)+2*GETNUMLAP(_s) + 6)
+  #define S32S_IN_ENTRY(_s) (2*GETNUMRFB(_s)+2*GETNUMAFB(_s)+2*GETNUMSPB(_s)+GETNUMLRP(_s)+2*GETNUMLAP(_s) + 5)
   
 */
 
@@ -76,8 +70,7 @@ s32 lookupRFB(s32 P, nfs_fb_t *FB)
 /* Lookup the given prime in the RFB. Return it's index, if */
 /* found, or -1 otherwise.                                  */
 /************************************************************/
-{ s32   p, h, *loc;
-  u32   k;
+{ s32   p, k, h, *loc;
   static s32 *rfbHash;
   static int   initialized=0;
   
@@ -103,8 +96,7 @@ s32 lookupRFB(s32 P, nfs_fb_t *FB)
 
   loc = (s32 *)bsearch(&p, FB->rfb, FB->rfb_size, 2*sizeof(s32), cmpS32s);
   if (loc != NULL) {
-    assert((loc - FB->rfb) <= INT_MAX);
-    k = (s32)(loc - FB->rfb);
+    k = loc - FB->rfb;
     k /= 2; /* Each entry in the array is actually 2 s32's wide. */
     return k;
   }
@@ -117,8 +109,7 @@ s32 lookupAFB(s32 p, s32 r, nfs_fb_t *FB)
 /* Lookup the given prime in the AFB. Return it's index, if */
 /* found, or -1 otherwise.                                  */
 /************************************************************/
-{ s32 _p, _r, h, *loc;
-  u32 k;
+{ s32 _p, _r, k, h, *loc;
   static s32 *afbHash;
   static int   initialized=0;
 
@@ -146,8 +137,7 @@ s32 lookupAFB(s32 p, s32 r, nfs_fb_t *FB)
   if (FB->afb[2*k] != _p) {
     loc = (s32 *)bsearch(&_p, FB->afb, FB->afb_size, 2*sizeof(s32), cmpS32s);
     if (loc != NULL) {
-	  assert((loc - FB->afb) <= INT_MAX);
-      k = (s32)(loc - FB->afb);
+      k = loc - FB->afb;
       k /= 2; /* Each entry in the array is actually 2 s32's wide. */
       while ((k>0) && (FB->afb[2*(k-1)]==_p))
         k--;
@@ -176,9 +166,7 @@ int relConvertToData(s32 *data, relation_t *R)
 
   size=1;
   sF = 0;
-  *( (s64*)&data[size]) = R->a;
-  //data[size++] = R->a;
-  size += 2;
+  data[size++] = R->a; 
   data[size++] = R->b;
   for (i=0; i<R->rFSize; i++) {
     data[size++] = R->rFactors[i];
@@ -221,9 +209,7 @@ int dataConvertToRel(relation_t *R, s32 *data)
 
   sF = data[0];
   size=1;
-  R->a = *( (s64*) &data[size] );
-  size += 2;
-
+  R->a = data[size++];
   R->b = data[size++];
   /** Read RFB entries **/
   R->rFSize = (int)GETNUMRFB(sF);
@@ -241,7 +227,7 @@ int dataConvertToRel(relation_t *R, s32 *data)
   if (R->aFSize > MAX_ALG_FACTORS) {
     fprintf(stderr, "dataConvertToRel() Error: MAX_ALG_FACTORS too small to hold %d factors!\n",
             R->aFSize);
-    fprintf(stderr, "sF field was: %8.8" PRIx32 "\n", sF);
+    fprintf(stderr, "sF field was: %8.8lx\n", sF);
     return -1;
   }
   for (i=0; i<R->aFSize; i++)  {
@@ -295,6 +281,18 @@ int dataConvertToRel(relation_t *R, s32 *data)
   return size;
 }
  
+
+void readRawS32(s32 *w, FILE *fp)
+{ 
+  fread(w, sizeof(s32), 1, fp);
+}
+
+void writeRawS32(FILE *fp, s32 *w)
+{ 
+  fwrite(w, sizeof(s32), 1, fp);
+}
+  
+
 /***********************************************/
 int writeRel(FILE *fp, s32 *relData)
 /***********************************************/
@@ -317,13 +315,13 @@ int readRel(relation_t *R, FILE *fp)
 /*****************************************************/
 { s32 data[1024], dataSize=0, sF;
 
-  readRaw32(&sF, fp);
+  readRawS32(&sF, fp);
   if (feof(fp))
     return -1;
   data[0] = sF;
   dataSize = S32S_IN_ENTRY(sF) - 1; /* We already read the first one! */
   if (dataSize > 1024) {
-    fprintf(stderr, "readRel() Error: dataSize = %" PRId32 " > 1024! Increase and recompile!\n",
+    fprintf(stderr, "readRel() Error: dataSize = %ld > 1024! Increase and recompile!\n",
             dataSize);
     return -1;
   }
@@ -353,7 +351,7 @@ int writeRelList(char *fname, rel_list *L)
     return -1;
   }
   /* The first 4 bytes give the # of relations in the file. */
-  writeRaw32(fp, &L->numRels);
+  writeRawS32(fp, &L->numRels);
   index = 0;
   for (i=0; i<L->numRels; i++) {
     writeRel(fp, &L->relData[L->relIndex[i]]);
@@ -370,8 +368,7 @@ int readRelList(rel_list *L, char *fname)
 /* maxDataSize fields.                                                       */
 /*****************************************************************************/
 { s32  size, relsRead, sF, relSize;
-  s32  *buf, bufMax;
-  size_t bufSize, bufIndex;
+  s32  *buf, bufMax, bufSize, bufIndex;
   FILE *fp;
 
   L->numRels = 0; L->relIndex[0]=0;
@@ -381,11 +378,11 @@ int readRelList(rel_list *L, char *fname)
   /* The first 4 bytes of the file always give the
      number of relations in the file.
   */
-  readRaw32(&L->numRels, fp);
+  readRawS32(&L->numRels, fp);
   
   printf("\n");
   if (L->numRels > L->maxRels) {
-    fprintf(stderr, "readRelList() Error: File contains %" PRIu32 " relations vs. maxRels=%" PRIu32 "\n",
+    fprintf(stderr, "readRelList() Error: File contains %ld relations vs. maxRels=%ld\n",
             L->numRels, L->maxRels);
     fclose(fp);
     return -1;
@@ -423,7 +420,7 @@ int readRelList(rel_list *L, char *fname)
     return -1;
   }
   if (size >= L->maxDataSize) {
-    fprintf(stderr, "  (read %" PRId32 " of %" PRId32 " relations).\n", relsRead, L->numRels);
+    fprintf(stderr, "  (read %ld of %ld relations).\n", relsRead, L->numRels);
     L->numRels = relsRead;
     fprintf(stderr, "readRelList() Error: L->relData is not large enough to handle %s!\n", fname);
     return -1;
@@ -447,8 +444,7 @@ int factRel(relation_t *R, nf_t *N)
   static mpz_t     temp1, temp2, norm;
   static mpz_poly  delta;
   static mpz_mat_t deltaHNF;
-  s32   i, factors[MAX_FACTORS+1], b;
-  s64   a;
+  s32   i, factors[MAX_FACTORS+1], a, b;
   s32   *loc, locIndex, r;
   s32   pFacts[10*MAX_FACTORS], p;
   int    numpFacts;
@@ -479,7 +475,7 @@ int factRel(relation_t *R, nf_t *N)
   /********** Get the RFB part. **********/  
   /* Do temp1 <-- a - bm  */
   a = R->a; b = R->b;
-  mpz_mul_si64(temp2,FB->y1,a);
+  mpz_mul_si(temp2,FB->y1,a);
   mpz_mul_si(temp1,FB->y0,b);
   mpz_add(temp1,temp2,temp1);
   mpz_abs(temp1,temp1);
@@ -513,8 +509,7 @@ int factRel(relation_t *R, nf_t *N)
       /* Find this factor in the RFB. */
       loc = (s32 *)bsearch(&pFacts[i], FB->rfb, rfbSize, 2*sizeof(s32), cmpS32s);
       if (loc != NULL) {
-	    assert((loc - FB->rfb) <= INT_MAX);
-        locIndex = (s32)(loc - FB->rfb);
+        locIndex = loc - FB->rfb;
         locIndex /= 2; /* Each entry in the array is actually 2 s32's wide. */
         e=1;
         while ((i<(numpFacts-1)) && (pFacts[i] == pFacts[i+1])) {
@@ -526,9 +521,7 @@ int factRel(relation_t *R, nf_t *N)
       } else if ((numLarge < MAX_LARGE_RAT_PRIMES) && ((u32)pFacts[i]< FB->maxP_r)) {
         R->p[numLarge++] = pFacts[i];
       } else {
-#ifdef GGNFS_VERBOSE
-        fprintf(stderr, "%" PRId32 "\n", p);
-#endif
+        fprintf(stderr, "%lu\n", p);
         return -177;
       }
     }
@@ -618,8 +611,7 @@ int factRel(relation_t *R, nf_t *N)
     for (i=0; i<numpFacts; i++) {
       /* Find this factor in the AFB. */
       p = pFacts[i];
-	  assert(p > 0);
-      if ((u32)p > FB->maxP_a) return -1923;
+      if (p>FB->maxP_a) return -1923;
       loc = (s32 *)bsearch(&p, FB->afb, afbSize, 2*sizeof(s32), cmpS32s);
       /* There is only one alg. prime with this norm dividing <a-b\alpha>, */
       /* so  the exponent is easy to find:                                 */
@@ -629,11 +621,10 @@ int factRel(relation_t *R, nf_t *N)
       }
       /* Find the corresponding 'r': */
       if (R->b%p==0) r=p; /* prime @ infty. */
-      else r = mulmod32((p+(s32)(R->a%p))%p, inverseModP(R->b, p), p);
+      else r = mulmod32((p+(R->a%p))%p, inverseModP(R->b, p), p);
       if (loc != NULL) {
         /* Find the first AFB element corresponding to this 'p'. */
-	    assert((loc - FB->afb) <= INT_MAX);
-        locIndex = (s32)(loc - FB->afb);
+        locIndex = loc - FB->afb;
         locIndex /= 2;
         while ((locIndex >0) && (FB->afb[2*(locIndex-1)]==p))
           locIndex--;
@@ -669,7 +660,7 @@ int factRel(relation_t *R, nf_t *N)
   for (i=0; i<FB->qcb_size; i++) {
     mpz_set_si(temp1, R->b);
     mpz_mul_ui(temp1, temp1, FB->qcb[2*i+1]);
-    mpz_set_si64(temp2, R->a);
+    mpz_set_si(temp2, R->a);
     mpz_sub(temp2, temp2, temp1);
     mpz_set_si(temp1, FB->qcb[2*i]);
     e = mpz_legendre(temp2, temp1);
@@ -678,7 +669,7 @@ int factRel(relation_t *R, nf_t *N)
   }
 mpz_set_si(temp1, R->b);
 mpz_mul(temp1, temp1, FB->y0);
-mpz_set_si64(temp2, R->a);
+mpz_set_si(temp2, R->a);
 mpz_mul(temp2, temp2, FB->y1);
 mpz_sub(temp1, temp2, temp1);
 if (mpz_sgn(temp1)<0)
@@ -707,8 +698,7 @@ int completeRelFact(relation_t *R, nf_t *N)
   static mpz_poly  delta;
   static mpz_mat_t deltaHNF;
   static s32 maxRFBPrime, maxAFBPrime, rfbSize, afbSize;
-  s32   i, factors[MAX_FACTORS+1], b, fact;
-  s64   a;
+  s32   i, factors[MAX_FACTORS+1], a, b, fact;
   s32   *loc, locIndex, r;
   s32   pFacts[10*MAX_FACTORS], p;
   int    numpFacts;
@@ -739,7 +729,7 @@ int completeRelFact(relation_t *R, nf_t *N)
   /********** Get the RFB part. **********/  
   /* Do temp1 <-- a - bm  */
   a = R->a; b = R->b;
-  mpz_mul_si64(temp2,FB->y1,a);
+  mpz_mul_si(temp2,FB->y1,a);
   mpz_mul_si(temp1,FB->y0,b);
   mpz_add(temp1,temp2,temp1);
   mpz_abs(temp1,temp1);
@@ -769,8 +759,7 @@ int completeRelFact(relation_t *R, nf_t *N)
       if ((u32)pFacts[i] < (u32)maxRFBPrime) {
         loc = (s32 *)bsearch(&pFacts[i], FB->rfb, rfbSize, 2*sizeof(s32), cmpS32s);
         if (loc != NULL) {
-		  assert((loc - FB->rfb) <= INT_MAX);
-          locIndex = (s32)(loc - FB->rfb);
+          locIndex = loc - FB->rfb;
           locIndex /= 2; /* Each entry in the array is actually 2 s32's wide. */
           e=1;
           while ((i<(numpFacts-1)) && (pFacts[i] == pFacts[i+1])) {
@@ -783,9 +772,7 @@ int completeRelFact(relation_t *R, nf_t *N)
       } else if ((numLarge < MAX_LARGE_RAT_PRIMES) && ((u32)pFacts[i]< (u32)FB->maxP_r)) {
         R->p[numLarge++] = pFacts[i];
       } else {
-#ifdef GGNFS_VERBOSE
-        fprintf(stderr, "%" PRId32 "\n", pFacts[i]);
-#endif
+        fprintf(stderr, "%lu\n", pFacts[i]);
         return -177;
       }
     }
@@ -856,11 +843,10 @@ exit(-1);
       }
       /* Find the corresponding 'r': */
       if (R->b%p==0) r=p; /* prime @ infty. */
-      else r = mulmod32((p+(s32)(R->a%p))%p, inverseModP(R->b, p), p);
+      else r = mulmod32((p+(R->a%p))%p, inverseModP(R->b, p), p);
       if (loc != NULL) {
         /* Find the first AFB element corresponding to this 'p'. */
-	    assert((loc - FB->afb) <= INT_MAX);
-        locIndex = (s32)(loc - FB->afb);
+        locIndex = loc - FB->afb;
         locIndex /= 2;
         while ((locIndex >0) && (FB->afb[2*(locIndex-1)]==p))
           locIndex--;
@@ -891,7 +877,7 @@ exit(-1);
   for (i=0; i<FB->qcb_size; i++) {
     mpz_set_si(temp1, R->b);
     mpz_mul_ui(temp1, temp1, FB->qcb[2*i+1]);
-    mpz_set_si64(temp2, R->a);
+    mpz_set_si(temp2, R->a);
     mpz_sub(temp2, temp2, temp1);
     mpz_set_si(temp1, FB->qcb[2*i]);
     e = mpz_legendre(temp2, temp1);
@@ -900,7 +886,7 @@ exit(-1);
   }
 mpz_set_si(temp1, R->b);
 mpz_mul(temp1, temp1, FB->y0);
-mpz_set_si64(temp2, R->a);
+mpz_set_si(temp2, R->a);
 mpz_mul(temp2, temp2, FB->y1);
 mpz_sub(temp1, temp2, temp1);
 if (mpz_sgn(temp1)<0)
@@ -926,7 +912,7 @@ int cmpRelsAB(const void *X, const void *Y)
 }
 
 /************************************************************************/
-int factRels_clsieved(relation_t *R, size_t numRels, nf_t *N)
+int factRels_clsieved(relation_t *R, int numRels, nf_t *N)
 /************************************************************************/
 /* R[0], ..., R[numRels-1] have (a,b) fields that should be factored.   */
 /* The b's should be all in a fairly narrow range (i.e., perhaps from a */
@@ -935,14 +921,10 @@ int factRels_clsieved(relation_t *R, size_t numRels, nf_t *N)
 /* out to be useless (not almost-smooth) will have their (a,b) fields   */
 /* set to zero.                                                         */
 /************************************************************************/
-{ int  sorted=1, e, res;
-  size_t relNum, numFact;
-  unsigned int i, j;
-  s32 b, p, r;
-  s64 a;
-  u32 rCutoff=300, aCutoff=300;
+{ int  i, j, sorted=1, relNum, numFact, e, res;
+  s32 a, b, p, r, rCutoff=300, aCutoff=300;
   s32 residue;
-  s64 minA, maxA, minB, maxB;
+  s32 minA, maxA, minB, maxB;
   nfs_fb_t *FB = N->FB;
 
   /* Sort the relations lexicographically ascending with b>a. */
@@ -1028,7 +1010,7 @@ int factRels_clsieved(relation_t *R, size_t numRels, nf_t *N)
     /* Find the first a >= R[0].a so that (a, R[0].b) is divisible by (p,r). */
     b = R[0].b;
     
-    a = R[0].a + (mulmod32(b, r, p) - (s32)(R[0].a%p) + p)%p;
+    a = R[0].a + (mulmod32(b, r, p) - R[0].a%p + p)%p;
     while (relNum < numRels) {
       if ((R[relNum].a==a) && (R[relNum].b==b))  {
         numFact = R[relNum].rFSize;
@@ -1042,7 +1024,7 @@ int factRels_clsieved(relation_t *R, size_t numRels, nf_t *N)
         if (relNum < numRels) {
           if (R[relNum].b != b)  { /* Re-adjust a. */
             b = R[relNum].b;
-            a = R[relNum].a + (mulmod32(b, r, p) - (s32)(R[relNum].a%p) + p)%p;
+            a = R[relNum].a + (mulmod32(b, r, p) - R[relNum].a%p + p)%p;
           }
           if (R[relNum].a > a) {
             do {
@@ -1065,14 +1047,14 @@ int factRels_clsieved(relation_t *R, size_t numRels, nf_t *N)
     /* Find the first a >= R[0].a so that (a, R[0].b) is divisible by (p,r). */
     b = R[0].b;
     
-    a = R[0].a + (mulmod32(b, r, p) - (s32)(R[0].a%p) + p)%p;
+    a = R[0].a + (mulmod32(b, r, p) - R[0].a%p + p)%p;
     while (relNum < numRels) {
       while ((relNum < numRels) && (R[relNum].a != a)) {
         if (R[relNum].a < a) relNum++;
         if (relNum < numRels) {
           if (R[relNum].b != b)  { /* Re-adjust a. */
             b = R[relNum].b;
-            a = R[relNum].a + (mulmod32(b, r, p) - (s32)(R[relNum].a%p) + p)%p;
+            a = R[relNum].a + (mulmod32(b, r, p) - R[relNum].a%p + p)%p;
           }
           if (R[relNum].a > a)
             do {
@@ -1125,8 +1107,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
   static mpz_poly  delta;
   static mpz_mat_t deltaHNF;
   static s32 maxRFBPrime, maxAFBPrime, rfbSize, afbSize;
-  s32   i, factors[MAX_FACTORS+1], b, fact, r;
-  s64   a;
+  s32   i, factors[MAX_FACTORS+1], a, b, fact, r;
   s32   locIndex;
   s32   pFacts[10*MAX_FACTORS], p;
   int    numpFacts, numFactors, kk;
@@ -1162,20 +1143,11 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
   /********** Get the RFB part. **********/  
   /* Do temp1 <-- a - bm  */
   a = R->a; b = R->b;
-  mpz_mul_si64(temp2,FB->y1,a);
-  //printf("a = %" PRId64 "\n", a );
-  //gmp_printf("y1*a=%Zd\n", temp2 );
- 
+  mpz_mul_si(temp2,FB->y1,a);
   mpz_mul_si(temp1,FB->y0,b);
-  //gmp_printf("y0*b=%Zd\n", temp1 );
-
   mpz_add(temp1,temp2,temp1);
-  //gmp_printf("sum=%Zd\n", temp1 );
-
   mpz_abs(temp1,temp1);
-  //gmp_printf("abs=%Zd\n", temp1 );
 
- 
   /* Trial division to find the small factors: */
   numFactors=0;
   for (i=0; i<rTDiv; i++) {
@@ -1223,12 +1195,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
       numpFacts += (pFacts[j]>1);
       kk += (pFacts[j]>1);
       if (pFacts[j]==0) pFacts[j]=1;
-      if (mpz_fdiv_ui(temp1, pFacts[j]) != 0) { 
-#ifdef GGNFS_VERBOSE
-        gmp_printf("temp1=%Zd, pFacts[%d]=%ld\n", temp1, j, pFacts[j]); 
-#endif
-	return -191; 
-      }
+      if (mpz_fdiv_ui(temp1, pFacts[j]) != 0) return -191;
       mpz_tdiv_q_ui(temp1, temp1, pFacts[j]);
     }
     if (mpz_cmp_ui(temp1, 1)) {
@@ -1267,9 +1234,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
       } else if ((numLarge < MAX_LARGE_RAT_PRIMES) && ((u32)pFacts[i]< (u32)FB->maxP_r)) {
         R->p[numLarge++] = pFacts[i];
       } else {
-#ifdef GGNFS_VERBOSE
-        fprintf(stderr, "%" PRId32 " (numLarge=%d)\n", pFacts[i], numLarge);
-#endif
+        fprintf(stderr, "%lu (numLarge=%d)\n", pFacts[i], numLarge);
         return -177;
       }
     }
@@ -1286,7 +1251,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
   mpz_evalF(norm, R->a, R->b, FB->f);
   mpz_abs(norm, norm);
 
-  mpz_set_si64(temp1, R->a);
+  mpz_set_si(temp1, R->a);
   mpz_mul(temp1, temp1, &FB->f->coef[FB->f->degree]);
   mpz_mul_ui(temp2, bMult, R->b);
 
@@ -1362,12 +1327,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
       numpFacts += (pFacts[j]>1);
       kk += (pFacts[j] > 1);
       if (pFacts[j]==0) pFacts[j]=1;
-      if (mpz_fdiv_ui(norm, pFacts[j]) != 0) { 
-#ifdef GGNFS_VERBOSE
-        gmp_printf("norm=%Zd, pFacts[%d]=%ld\n", norm, j, pFacts[j]); 
-#endif
-	return -291; 
-      }
+      if (mpz_fdiv_ui(norm, pFacts[j]) != 0) return -291;
       mpz_tdiv_q_ui(norm, norm, pFacts[j]);
     }
     if (mpz_cmp_ui(norm, 1)) {
@@ -1380,13 +1340,13 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
         numpFacts++;
         mpz_set_ui(norm, 1);
       } else {
-        printf("Algebraic failure: (%" PRId64 ", %" PRId32 ")\n", R->a, R->b);
+        printf("Algebraic failure: (%ld, %ld)\n", R->a, R->b);
         printf("  leftover norm is: "); mpz_out_str(stdout, 10, norm); printf("\n");
         printf("The following were the siever-supplied primes (norms):\n");
         for (i=0; i<R->aFSize; i++)
-          printf("%" PRIx32 " (%" PRId32 ") ", R->aFactors[i], FB->afb[2*R->aFactors[i]]);
+          printf("%lx (%ld) ", R->aFactors[i], FB->afb[2*R->aFactors[i]]);
         for (i=0; i<MAX_LARGE_ALG_PRIMES; i++)
-          printf("(%" PRId32 ")", R->a_p[i]);
+          printf("(%ld)", R->a_p[i]);
         printf("\n");
         return -293;
       }
@@ -1400,15 +1360,10 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
     for (i=0; i<numpFacts; i++) {
       /* Find this factor in the AFB. */
       p = pFacts[i];
-      if ((u32)p> (u32)FB->maxP_a) { 
-#ifdef GGNFS_VERBOSE
-        fprintf(stderr, "%" PRId32 "\n", p); 
-#endif
-	return -1923; 
-      }
+      if ((u32)p> (u32)FB->maxP_a) { fprintf(stderr, "%lu\n", p); return -1923; }
       /* Find the corresponding 'r': */
       if (R->b%p==0) r=p; /* prime @ infty. */
-      else r = mulmod32((p+(s32)(R->a%p))%p, inverseModP(R->b, p), p);
+      else r = mulmod32((p+(R->a%p))%p, inverseModP(R->b, p), p);
 
       if ((u32)p < (u32)maxAFBPrime)
         locIndex = lookupAFB(p, r, FB);
@@ -1448,7 +1403,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
   for (i=0; i<FB->qcb_size; i++) {
     mpz_set_si(temp1, R->b);
     mpz_mul_ui(temp1, temp1, FB->qcb[2*i+1]);
-    mpz_set_si64(temp2, R->a);
+    mpz_set_si(temp2, R->a);
     mpz_sub(temp2, temp2, temp1);
     mpz_set_si(temp1, FB->qcb[2*i]);
     e = mpz_legendre(temp2, temp1);
@@ -1457,7 +1412,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
   }
   mpz_set_si(temp1, R->b);
   mpz_mul(temp1, temp1, FB->y0);
-  mpz_set_si64(temp2, R->a);
+  mpz_set_si(temp2, R->a);
   mpz_mul(temp2, temp2, FB->y1);
   mpz_sub(temp1, temp2, temp1);
   if (mpz_sgn(temp1)<0)
@@ -1475,7 +1430,7 @@ int completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv)
 }
 
 /**************************************************************/
-void makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB, int short_form)
+void makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB)
 /**************************************************************/
 /* Turn a good relation with partial factorization into a     */
 /* line of output, parseable by procrels.c (using the function*/
@@ -1484,29 +1439,22 @@ void makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB, int short_form)
 { int i, numR=0, numA=0;
   char s[128];
 
-  sprintf(str, "%" PRId64 ",%" PRId32, R->a, R->b);
-
-  if (short_form)
-      return;
-
-  strcat(str, ":");
-
+  sprintf(str, "%ld,%ld:", R->a, R->b);
   for (i=0; i<R->rFSize; i++) {
     if (R->rFactors[i] >= CLIENT_SKIP_R_PRIMES) {
       if (numR==0)
-        sprintf(s, "%" PRIx32, FB->rfb[2*R->rFactors[i]]);
-      else sprintf(s, ",%" PRIx32, FB->rfb[2*R->rFactors[i]]);
+        sprintf(s, "%lx", FB->rfb[2*R->rFactors[i]]);
+      else sprintf(s, ",%lx", FB->rfb[2*R->rFactors[i]]);
       strcat(str, s);
       numR++;
     }
   }
-
   for (i=0; i<MAX_LARGE_RAT_PRIMES; i++) {
     if (R->p[i] > 1) {
       if (numR>0)
-        sprintf(s, ",%" PRIx32, R->p[i]);
+        sprintf(s, ",%lx", R->p[i]);
       else
-        sprintf(s, "%" PRIx32, R->p[i]);
+        sprintf(s, "%lx", R->p[i]);
       strcat(str, s);
       numR++;
     }
@@ -1515,8 +1463,8 @@ void makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB, int short_form)
   for (i=0; i<R->aFSize; i++) {
     if (R->aFactors[i] >= CLIENT_SKIP_A_PRIMES) {
       if (numA==0)
-        sprintf(s, "%" PRIx32, FB->afb[2*R->aFactors[i]]);
-      else sprintf(s, ",%" PRIx32, FB->afb[2*R->aFactors[i]]);
+        sprintf(s, "%lx", FB->afb[2*R->aFactors[i]]);
+      else sprintf(s, ",%lx", FB->afb[2*R->aFactors[i]]);
       strcat(str, s);
       numA++;
     }
@@ -1525,9 +1473,9 @@ void makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB, int short_form)
   for (i=0; i<MAX_LARGE_ALG_PRIMES; i++) {
     if (R->a_p[i] > 1) {
       if (numA>0)
-        sprintf(s, ",%" PRIx32, R->a_p[i]);
+        sprintf(s, ",%lx", R->a_p[i]);
       else
-        sprintf(s, "%" PRIx32, R->a_p[i]);
+        sprintf(s, "%lx", R->a_p[i]);
       strcat(str, s);
       numA++;
     }
@@ -1545,139 +1493,77 @@ int parseOutputLine(relation_t *R, char *str, nfs_fb_t *FB)
 /*   potentially a good relation. Nonzero if it's bad for    */
 /*   some reason.                                            */
 /*************************************************************/
-{ 
-    size_t len = strlen(str);
-    size_t i;
-    size_t j;
-    size_t size;
-  
-    int largeAlg, largeRat;
-    char ab[128], rfb[256], afb[256];
-  
-    s32 p, r, k;
-    s32 maxRFB, maxAFB;
+{ int  len=strlen(str), i, j, largeAlg, largeRat, size;
+  char ab[128], rfb[256], afb[256];
+  s32 p, r, k;
+  s32 maxRFB, maxAFB;
 
-    maxRFB = FB->rfb[2*(FB->rfb_size - 1)];
-    maxAFB = FB->afb[2*(FB->afb_size - 1)];
+  maxRFB = FB->rfb[2*(FB->rfb_size-1)];
+  maxAFB = FB->afb[2*(FB->afb_size-1)];
  
-    /* It's a shame - we could have parsed this with something similar
-       to sscanf(str, "%[^:]:%[^:]:%[^:]", s1, s2, s3) ,
-       but it doesn't handle the empty case well. There is surely some
-       other standard library function capable of doing this parsing,
-       but oh well.
-    */
-  
-    i = 0;
-    j = 0;
-  
-    while ((i < len) && (j < 127) && (str[i] != ':'))
-    {
-        ab[j++] = str[i++];
+  /* It's a shame - we could have parsed this with something similar
+     to sscanf(str, "%[^:]:%[^:]:%[^:]", s1, s2, s3) ,
+     but it doesn't handle the empty case well. There is surely some
+     other standard library function capable of doing this parsing,
+     but oh well.
+  */
+  i=j=0;
+  while ((i<len) && (j<127)&& (str[i] != ':'))
+    ab[j++] = str[i++];
+  ab[j]=0; i++;
+
+  j=0;
+  while ((i<len) && (j<255) && (str[i] != ':'))
+    rfb[j++] = str[i++];
+  rfb[j]=0; i++;
+
+  j=0;
+  while ((i<len) && (j<255) && (str[i] != ':'))
+    afb[j++] = str[i++];
+  afb[j]=0; i++;
+
+  if (sscanf(ab, "%ld,%ld", &R->a, &R->b) != 2) return -1;
+
+  /* Rational primes: */
+  largeRat=0;
+  R->p[0]=R->p[1]=1;
+  R->rFSize=0; j=0;
+  size = strlen(rfb);
+  while ((j<size)&&(sscanf(rfb+j,"%lx", &p)==1)) {
+    k = lookupRFB(p, FB);
+    if (k>=0) {
+      R->rFactors[R->rFSize] = k;
+      R->rFSize+=1;
+    } else if ((p > maxRFB)&&(largeRat < FB->maxLP)) {
+      R->p[largeRat++] = p;
     }
+    while (isxdigit(rfb[j])) j++;
+    j++; /* Pass the seperator. */
+  }
 
-    ab[j] = 0; 
-    i++;
-
-    j = 0;
-  
-    while ((i < len) && (j < 255) && (str[i] != ':'))
-    {
-        rfb[j++] = str[i++];
+  /* Algebraic primes: */
+  largeAlg=0;
+  R->a_p[0]=R->a_p[1]=1;
+  R->a_r[0]=R->a_r[1]=1;
+  R->aFSize=0; j=0;
+  size = strlen(afb);
+  while ((j<size) && (sscanf(afb+j,"%lx", &p)==1)) {
+    if (R->b % p) {
+      r = mulmod32(p+(R->a%p), inverseModP(R->b, p), p);
+      k = lookupAFB(p, r, FB);
+//printf("\n\n(%ld, %ld) : Look up of algebraic factor (%ld, %ld) gave k=%ld\n",
+//        R->a, R->b, p, r, k);
+      if (k>=0) {
+        R->aFactors[R->aFSize] = k;
+        R->aFSize+=1;
+      } else if ((p > maxAFB) && (largeAlg < FB->maxLPA)) {
+        R->a_p[largeAlg] = p; 
+        R->a_r[largeAlg++] = r;
+      }
     }
-
-    rfb[j] = 0; 
-    i++;
-
-    j = 0;
-  
-    while ((i < len) && (j < 255) && (str[i] != ':'))
-    {
-      afb[j++] = str[i++];
-    }
-  
-    afb[j] = 0; 
-    i++;
-
-    if (sscanf(ab, "%" SCNd64 ",%" SCNd32, &R->a, &R->b) != 2) 
-        return -1;
-
-    /* Rational primes: */
-    largeRat = 0;
-  
-    R->p[0] = 1;
-    R->p[1] = 1;
-  
-    R->rFSize = 0; 
-    j = 0;
-  
-    size = strlen(rfb);
-  
-    while ((j < size) && (sscanf(rfb + j,"%" SCNd32, &p) == 1)) 
-    {
-        k = lookupRFB(p, FB);
-        if (k >= 0) 
-        {
-            R->rFactors[R->rFSize] = k;
-            R->rFSize+=1;
-        } 
-        else 
-        if ((p > maxRFB) && (largeRat < FB->maxLP)) 
-        {
-            R->p[largeRat++] = p;
-        }
-        while (isxdigit(rfb[j]))
-        {
-            j++;
-        }
-
-        j++; /* Pass the separator. */
-    }
-
-    /* Algebraic primes: */
-    largeAlg = 0;
-  
-    R->a_p[0] = 1;
-    R->a_p[1] = 1;
-
-    R->a_r[0] = 1;
-    R->a_r[1] = 1;
-
-    R->aFSize = 0;
-    j = 0;
-  
-    size = strlen(afb);
-
-    while ((j < size) && (sscanf(afb + j,"%" SCNd32, &p) == 1)) 
-    {
-        if (R->b % p) 
-        {
-            r = mulmod32(p + (s32)(R->a%p), inverseModP(R->b, p), p);
-            k = lookupAFB(p, r, FB);
-
-            //printf("\n\n(%ld, %ld) : Look up of algebraic factor (%ld, %ld) gave k=%ld\n",
-            //        R->a, R->b, p, r, k);
-         
-            if (k>=0) 
-            {
-                R->aFactors[R->aFSize] = k;
-                R->aFSize++;
-            } 
-            else 
-            if ((p > maxAFB) && (largeAlg < FB->maxLPA)) 
-            {
-                R->a_p[largeAlg] = p; 
-                R->a_r[largeAlg++] = r;
-            }
-        } 
-
-        while (isxdigit(afb[j])) 
-        {
-            j++;
-        }
-
-        j++; /* Pass the separator. */
-    }
-
-    return 0;
+    while (isxdigit(afb[j])) j++;
+    j++; /* Pass the seperator. */
+  }
+  return 0;
 }
 

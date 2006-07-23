@@ -12,7 +12,7 @@ CFLAGS= -O3
 CC=gcc
 CTANGLE=ctangle
 
-SRCFILES=gcd32.c 32bit.h psp.c siever-config.w \
+SRCFILES=gcd32.c 32bit.h mpqs.c psp.c Makefile siever-config.w \
 	ula2.asm medsched2.asm lasched3.asm pt64.asm lasieve-prepn.asm \
 	sieve-from-sched4p.asm tdsieve-from-sched4q.asm ri-aux.asm \
 	lasched.h medsched.h slinie.asm ls-defs.asm gcd32.c modinv1002.asm
@@ -38,6 +38,9 @@ SRCFILES=gcd32.c 32bit.h psp.c siever-config.w \
 %.dvi: %.tex
 	tex $<
 
+%.s: %.asm
+	gasp -c '#' -o $@ $^
+
 %.o: %.s
 	cc -c $^
 
@@ -51,10 +54,12 @@ SRCFILES=gcd32.c 32bit.h psp.c siever-config.w \
 ../if.h: ../if.w
 	$(CTANGLE) ../if.w
 
-gcd32.o psp.o: siever-config.h ../if.h 
+mpqs.o: ../gmp-aux.h
+
+gcd32.o mpqs.o psp.o: siever-config.h ../if.h 
 
 liblasieve.a: ri-aux.o sieve-from-sched4p.o tdsieve-from-sched4q.o \
-	modinv1002.o psp.o pt64.o lasieve-prepn.o gcd32.o
+	modinv1002.o psp.o pt64.o mpqs.o lasieve-prepn.o gcd32.o
 	ar rcs $@ $^
 
 ls-defsI%.asm:

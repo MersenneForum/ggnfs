@@ -21,8 +21,7 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include <assert.h>
-#include <limits.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,7 +138,7 @@ int dickmann_cleanup()
 */
 double dickman(double x)
 { double h, ii;
-  u32    i;
+  int    i;
   
   if( dickmann_table == NULL )
     dickmann_init();
@@ -148,8 +147,7 @@ double dickman(double x)
   if(x<=2.0) return 1-log(x);
   x=x-2.0;
   h=modf(x*dickm_nstep,&ii);
-  assert(ii <= UINT_MAX);
-  i=(u32)ii;
+  i=ii;
   
   if(i>=dtab_max) {
     if(x==dtab_max) {

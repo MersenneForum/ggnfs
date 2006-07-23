@@ -15,9 +15,13 @@
 
 #include <sys/types.h>
 #include <math.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#define asm_modinv32(x) modinv32(x)
+#else
+#include "asm/lasieve-asm.h"
 #include "lasieve.h"
-
+#endif
 /*********************************************************/
 void lasieve_setup(u32_t * FB, u32_t * proots, u32_t fbsz,
                    i32_t a0, i32_t a1, i32_t b0, i32_t b1, u32_t * ri_ptr)

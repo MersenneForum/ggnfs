@@ -39,8 +39,7 @@ void getTraceConstants(nf_t *N);
 /****************************************************************/
 int smallestFactor(mpz_fact_t *F)
 /****************************************************************/
-{ int minLoc;
-  unsigned int i;
+{ int minLoc, i;
 
   minLoc = -1;
   for (i=0; i<F->size; i++)
@@ -364,7 +363,7 @@ void idealHNF_ib(mpz_mat_t *H, mpz_poly a, nf_t *N)
 }
 
 /****************************************************************/
-void idealHNF_ib_ab(mpz_mat_t *H, s64 a, s32 b, nf_t *N)
+void idealHNF_ib_ab(mpz_mat_t *H, s32 a, s32 b, nf_t *N)
 /****************************************************************/
 /* Compute the HNF representation, wrt the integral basis, of   */
 /* the principal ideal <a*c_d-b\hat{\alpha}>O.                  */
@@ -397,7 +396,7 @@ void idealHNF_ib_ab(mpz_mat_t *H, s64 a, s32 b, nf_t *N)
 /* CJM, 12/1. */
 mpz_mul_si(tmp2, bmultiplier, -b);
 
-  mpz_mul_si64(tmp, &N->f->coef[n], a);
+  mpz_mul_si(tmp, &N->f->coef[n], a);
   for (i=0; i<n; i++) {
     /* Set the i-th column of H equal to             */
     /* omega_i*(a - b*bmultiplier\omega_1) =         */
@@ -712,7 +711,6 @@ int getIntegralBasis(nf_t *N, mpz_fact_t *D, int tryHard)
 /* sized primes (probably upto 15 digits or so.)                */
 /****************************************************************/
 { int        retVal, n=N->T->degree, i, j, l, pLoc, m;
-  unsigned int k;
   mpz_fact_t F;
   mpz_t      p, d_Op;
   mpz_mat_t  Op;
@@ -821,8 +819,8 @@ int getIntegralBasis(nf_t *N, mpz_fact_t *D, int tryHard)
   }
   for (i=0; i<m; i++)
     initIdeal(&N->sPrimes[i]);
-  for (k=0, m=0; k<F.size; k++) { 
-    m += factorPrime(&N->sPrimes[m], &F.factors[k], N);
+  for (i=m=0; i<F.size; i++) { 
+    m += factorPrime(&N->sPrimes[m], &F.factors[i], N);
   }
   N->numSPrimes = m;
   /* Some constants used to compute valuations. */

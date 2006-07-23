@@ -28,20 +28,21 @@
 
 #include "ggnfs.h"
 
+#ifdef _MSC_VER
+#define M_SQRT2 1.41421356237309504880
+#endif
+
+
+
+#define MIN(_a, _b) ((_a) < (_b) ? (_a) : (_b))
+#define MAX(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 #define MAX_IPBSIZE  100
 
-#define DEFAULT_LLLMAX_LOG 401.0*log(10.0)
+#define DEFAULT_LLLMAX_LOG 201.0*log(10.0)
 
 #define MAX_CD_EXTRA_PRIMES 20
 
 //#define _DEBUG
-
-#ifdef GMP_BUG
-#define patched_mpz_set_d(z, d) { double d_ = (d);  \
-  if (-1.0 < d_ && d_ < 1.0) mpz_set_ui((z), 0); else mpz_set_d((z), d_); }
-#else 
-#define patched_mpz_set_d(z, d) mpz_set_d(z, d)
-#endif
 
 #ifdef _DEBUG
 #define MAX_IDEAL_STR 4096
@@ -100,7 +101,7 @@ typedef struct {
 
 /* Prototypes for locally used stuff. */
 s32    locateP(s32 p, msqrt_t *M);
-void   updateEps_ab(msqrt_t *M, s64 a, s64 b, int exponent);
+void   updateEps_ab(msqrt_t *M, s32 a, s32 b, int exponent);
 void   updateEps(msqrt_t *M, mpz_poly delta, int exponent);
 void   updateCRT(msqrt_t *M, mpz_poly delta, mpz_t denom, int exponent);
 void   updateFactorization_ab(msqrt_t *M, relation_t *R, int sl);
@@ -208,9 +209,9 @@ void fix_for_cd(msqrt_t *M)
       
     }
     if (M->Cd.aI[i] > 0)
-      printf("in AFB at index %" PRId32 "...", M->Cd.aI[i]);
+      printf("in AFB at index %ld...", M->Cd.aI[i]);
     if (M->Cd.eI[i] > 0)
-      printf("is exceptional with index %" PRId32 "...", M->Cd.eI[i]);
+      printf("is exceptional with index %ld...", M->Cd.eI[i]);
     printf("\n");
 
   }
@@ -336,10 +337,10 @@ int computeBeta(msqrt_t *M)
 }
   
 /*********************************************************************/
-s64 findLP(s32 p, s32 r, msqrt_t *M)
+s32 findLP(s32 p, s32 r, msqrt_t *M)
 /*********************************************************************/
 { afb_elt_t thisP, *res;
-  s64 index;
+  s32 index;
 
   thisP.p = p; thisP.r = r;
   res = (afb_elt_t *)bsearch(&thisP, M->AFB, M->aSize, sizeof(afb_elt_t), afb_elt_cmp);
@@ -395,8 +396,8 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
 /* non-special primes we will need.                                  */
 /* Also, identify the special primes and store copies in sPrimes.    */
 /*********************************************************************/
-{ off_t      t1Size, maxSize;
-  s32        p1, r1, h1, ct1, i1, i, k;
+{ s32       t1Size, maxSize;
+  s32       p1, r1, h1, ct1, i1, i, k;
   afb_elt_t  *T1;
   mpz_t      tmp;
   struct     stat fileInfo; 
@@ -425,9 +426,9 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
     k++;
   }
   M->spSize = k;
-  printf("There are %" PRId32 " special prime ideals:\n", k);
+  printf("There are %ld special prime ideals:\n", k);
   for (i=0; i<k; i++) {
-    printf("Sp. %" PRId32 ": ", i);
+    printf("Sp. %ld: ", i);
     mpz_out_str(stdout, 10, M->sPrimes[i].p); printf(", ");
     mpz_poly_print(stdout, "",M->sPrimes[i].alpha); 
     printf("        Ramification index: %d\n", M->sPrimes[i].e);
@@ -437,7 +438,7 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
   maxSize = 0;
   for (i=0; i<=lpF->numFiles; i++) {
     if (i < lpF->numFiles)
-      sprintf(fName, "%s.%" PRId32, lpF->prefix, i);
+      sprintf(fName, "%s.%ld", lpF->prefix, i);
     else
       sprintf(fName, "%s.L", lpF->prefix);
     if (stat(fName, &fileInfo)) {
@@ -451,8 +452,8 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
   }
   maxSize += 1000; /* For safety. */
   if (!(T1 = (afb_elt_t *)malloc(maxSize*sizeof(afb_elt_t)))) {
-    fprintf(stderr, "setupPrimes() Error allocating %" PRIu32 " bytes for T1!\n", 
-            (u32)(maxSize*sizeof(afb_elt_t)) );
+    fprintf(stderr, "setupPrimes() Error allocating %ld bytes for T1!\n", 
+            maxSize*sizeof(afb_elt_t));
     exit(-1);
   }
 
@@ -460,7 +461,7 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
   t1Size = 0;
   for (i=0; i<=lpF->numFiles; i++) {
     if (i < lpF->numFiles)
-      sprintf(fName, "%s.%" PRId32, lpF->prefix, i);
+      sprintf(fName, "%s.%ld", lpF->prefix, i);
     else
       sprintf(fName, "%s.L", lpF->prefix);
     if (!(fp = fopen(fName, "rb"))) {
@@ -470,16 +471,16 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
     while (!(feof(fp)) && (t1Size < maxSize)) {
       r1 = -1;
       if (i < lpF->numFiles) {
-        readRaw32(&h1, fp);
-        readRaw32(&p1, fp);
-        readRaw32(&r1, fp);
-        readRaw32(&i1, fp);
-        readRaw32(&ct1, fp);
+        readRawS32(&h1, fp);
+        readRawS32(&p1, fp);
+        readRawS32(&r1, fp);
+        readRawS32(&i1, fp);
+        readRawS32(&ct1, fp);
       } else {
-        readRaw32(&p1, fp);
-        readRaw32(&r1, fp);
-        readRaw32(&i1, fp);
-        readRaw32(&ct1, fp);
+        readRawS32(&p1, fp);
+        readRawS32(&r1, fp);
+        readRawS32(&i1, fp);
+        readRawS32(&ct1, fp);
       }
       if (r1 >= 0) {
         T1[t1Size].p = p1; T1[t1Size].r = r1;
@@ -489,14 +490,14 @@ int setupPrimes(msqrt_t *M, multi_file_t *lpF)
     fclose(fp);
   }
   if (t1Size >= maxSize) {
-    fprintf(stderr, "setupPrimes() severe error! maxSize=%" PRIu64 " exceeded!\n", (u64)maxSize);
+    fprintf(stderr, "setupPrimes() severe error! maxSize=%ld exceeded!\n", maxSize);
     exit(-1);
   
   }
   /* And sort them. */
   qsort(T1, t1Size, sizeof(afb_elt_t), afb_elt_cmp);
 
-  printf("Found %" PRIu64 " large primes total.\n", (u64)t1Size);
+  printf("Found %ld large primes total.\n", t1Size);
   /* Finally, the large primes we needed are in T1 and */
   /* there are t1Size of them.                         */
   M->aSize = t1Size + M->FB->afb_size;
@@ -580,13 +581,7 @@ int getIPB_mpz(msqrt_t *M, double logTotal)
   return baseSize;
 }
 
-/*
-STEN: ((NR_MULTIPLIER * x )/ 10) is actually calculated. This approach
-	  allows us to avoid 'double' to 'INT32' conversion warning message
-	  (NR_MULTIPLIER was defined as 1.3 previously)
-*/
-#define NR_MULTIPLIER 13  
-						   
+#define NR_MULTIPLIER 1.3
 /*******************************************************/
 int ratSqrt(relation_t *R, int e, s32 depSize, msqrt_t *M)
 /*******************************************************/
@@ -626,20 +621,20 @@ int ratSqrt(relation_t *R, int e, s32 depSize, msqrt_t *M)
     /*     all be even if it's a good dependence).                            */
     /* (7) Free the tables - we won't need them no mo'.                       */
     /**************************************************************************/
-    nr = (NR_MULTIPLIER*depSize*M->N->FB->maxLP) / 10;
+    nr = NR_MULTIPLIER*depSize*M->N->FB->maxLP;
     if (!(ratHashList = (rat_p_t *)malloc(2*nr*sizeof(rat_p_t)))) {
-      fprintf(stderr, "ratSqrt() Error allocating %" PRIu32 " bytes for ratHashList!\n",
-              (u32)(2*nr*sizeof(rat_p_t)) );
+      fprintf(stderr, "ratSqrt() Error allocating %ld bytes for ratHashList!\n",
+              nr*sizeof(rat_p_t));
       exit(-1);
     }
     if (!(ratLeftoverList = (rat_p_t *)malloc((nr/2)*sizeof(rat_p_t)))) {
-      fprintf(stderr, "ratSqrt() Error allocating %" PRIu32 " bytes for ratLeftoverList!\n",
-              (u32)((nr/2)*sizeof(rat_p_t)) );
+      fprintf(stderr, "ratSqrt() Error allocating %ld bytes for ratLeftoverList!\n",
+              nr*sizeof(rat_p_t));
       free(ratHashList); exit(-1);
     }
     if (!(RFB_exps = (s32 *)malloc(M->N->FB->rfb_size*sizeof(s32)))) {
-      fprintf(stderr, "ratSqrt() Error allocating %" PRIu32 " bytes for RFB_exps!\n", 
-              (u32)(M->N->FB->rfb_size*sizeof(s32)) );
+      fprintf(stderr, "ratSqrt() Error allocating %ld bytes for RFB_exps!\n", 
+              M->N->FB->rfb_size*sizeof(s32));
       free(ratHashList); free(ratLeftoverList); exit(-1);
     }
     for (i=0; i<2*nr; i++) {
@@ -705,7 +700,7 @@ int ratSqrt(relation_t *R, int e, s32 depSize, msqrt_t *M)
     mpz_init_set_ui(M->ratSqrt, 1);
     for (i=0; i<M->FB->rfb_size; i++) {
       if (RFB_exps[i]%2) {
-        fprintf(stderr, "Error: RFB[%" PRId32 "] has odd exponent %" PRId32 "!\n",
+        fprintf(stderr, "Error: RFB[%ld] has odd exponent %ld!\n",
                  i, RFB_exps[i]);
         exit(-1);
       }
@@ -719,7 +714,7 @@ int ratSqrt(relation_t *R, int e, s32 depSize, msqrt_t *M)
           if (mpz_invert(tmp, tmp, M->FB->n))
             mpz_powm_ui(tmp, tmp, -e, M->FB->n);
           else {
-            printf("Error: Inverse of %" PRId32 " does not exist mod n!", M->FB->rfb[2*i]); 
+            printf("Error: Inverse of %ld does not exist mod n!", M->FB->rfb[2*i]); 
             printf("If this is an intentionally placed factor, re-run with -knowndiv.\n");
             exit(-1);
           }
@@ -733,10 +728,10 @@ int ratSqrt(relation_t *R, int e, s32 depSize, msqrt_t *M)
         mpz_set_ui(tmp, ratHashList[i].p);
         e = ratHashList[i].e/2;
         if (ratHashList[i].e%2) {
-          fprintf(stderr, "Error: Rational prime %" PRId32 " has odd exponent %" PRId32 "!\n",
-                  ratHashList[i].p, ratHashList[i].e);
-          msgLog(NULL, "Error: Rational prime %" PRId32 " has odd exponent %" PRId32 "!\n",
-                 ratHashList[i].p, ratHashList[i].e);
+          fprintf(stderr, "Error: Rational prime %ld has odd exponent %ld!\n",
+                   ratHashList[i].p, ratHashList[i].e);
+          msgLog(NULL, "Error: Rational prime %ld has odd exponent %ld!\n",
+                   ratHashList[i].p, ratHashList[i].e);
           res=-1; goto RSQRT_CLEANUP;
         }
         if (e > 1) 
@@ -754,9 +749,9 @@ int ratSqrt(relation_t *R, int e, s32 depSize, msqrt_t *M)
         mpz_set_ui(tmp, ratLeftoverList[i].p);
         e = ratLeftoverList[i].e/2;
         if (ratLeftoverList[i].e%2) {
-          fprintf(stderr, "Error: Rational prime %" PRId32 " (leftover) has odd exponent %" PRId32 "!\n",
+          fprintf(stderr, "Error: Rational prime %ld (leftover) has odd exponent %ld!\n",
                   ratLeftoverList[i].p, ratLeftoverList[i].e);
-          msgLog(NULL, "Error: Rational prime %" PRId32 " (leftover) has odd exponent %" PRId32 "!\n",
+          msgLog(NULL, "Error: Rational prime %ld (leftover) has odd exponent %ld!\n",
                   ratLeftoverList[i].p, ratLeftoverList[i].e);
           res=-1; goto RSQRT_CLEANUP;
         }
@@ -784,7 +779,7 @@ int initMsqrt(msqrt_t *M,  s32 *relsInDep, multi_file_t *prelF, multi_file_t *lp
 /* M->N and M->FB must already be set.                               */
 /*********************************************************************/
 { s32        i, j, k, depSize, R0, R1, Rindex;
-  s64        a, b, rel;
+  s32        a, b, rel;
   int         d=M->N->degree, e, fileNum;
   double      xr, xi, zr, zi, zpr, zpi, tr, ti, c;
   mpz_t       cd, tmp, Zsquare, tmp2, tmp3, bmultiplier;
@@ -885,7 +880,7 @@ ABexponentSum=0;
 
   printf("The zeros of f have been computed as:\n");
   for (i=0; i<d; i++)
-    printf("z%" PRId32 " = %1.15lf + I*%1.15lf\n",i,M->N->fZeros[i].r, M->N->fZeros[i].i);
+    printf("z%ld = %1.15lf + I*%1.15lf\n",i,M->N->fZeros[i].r, M->N->fZeros[i].i);
 
   /* Some precomputation to save work later. */
   for (i=0; i<d; i++)  {
@@ -932,7 +927,7 @@ ABexponentSum=0;
   mpz_set(cd, &M->FB->f->coef[d]);
 
   printf("Reading relations and computing initial <gamma> factorization...\n");
-  printf("depSize = %" PRId32 ".\n", depSize);
+  printf("depSize = %ld.\n", depSize);
   /* Prime the loop by opening the first relation file. */
   sprintf(fName, "%s.0", prelF->prefix);
   if (!(fp = fopen(fName, "rb"))) {
@@ -941,7 +936,7 @@ ABexponentSum=0;
   }
   printf("Reading relations from %s...\n", fName);
   R0 = 0;
-  readRaw32(&R1, fp);
+  readRawS32(&R1, fp);
   Rindex = 0; fileNum = 0;
   e=-1;
   /* Throughout this loop: the current file has relations [R0, R1). */
@@ -959,7 +954,7 @@ ABexponentSum=0;
         }
         printf("Reading relations from %s...\n", fName);
         R0 = R1;
-        readRaw32(&R1, fp); R1 += R0;
+        readRawS32(&R1, fp); R1 += R0;
         Rindex = R0;
       }
       if (readRel(&R, fp)==0) {
@@ -979,9 +974,9 @@ ABexponentSum=0;
     for (j=0; j<MAX_LARGE_RAT_PRIMES; j++) {
       mpz_mul_ui(tmp2, tmp2, R.p[j]);
     }
-    mpz_set_si64(tmp, b);
+    mpz_set_si(tmp, b);
     mpz_mul(tmp, tmp, M->FB->y0);
-    mpz_set_si64(tmp3, a);
+    mpz_set_si(tmp3, a);
     mpz_mul(tmp3, tmp3, M->FB->y1);
     mpz_sub(tmp, tmp3, tmp);
     mpz_abs(tmp, tmp);
@@ -989,16 +984,16 @@ ABexponentSum=0;
     if (mpz_cmp(tmp2, tmp)) {
       s32 pFacts[128];
       int numpFacts;
-      printf("Factorization of relation %" PRId32 " is wrong:\n", i);
-      printf("a=%" PRId64 ", b=%" PRId64 "\n", a, -b);
+      printf("Factorization of relation %ld is wrong:\n", i);
+      printf("a=%ld, b=%ld\n", a, -b);
       printf("a-bm = "); mpz_out_str(stdout, 10, tmp); printf("\n");
-      printf("Stored large primes are: %" PRIu32 " %" PRIu32 ".\n", (u32)R.p[0], (u32)R.p[1]);
+      printf("Stored large primes are: %ld %ld.\n", (u32)R.p[0], (u32)R.p[1]);
       printf("Product of factors gives:\n       ");
       mpz_out_str(stdout, 10, tmp2); printf("\n");
       numpFacts = factor(pFacts, tmp, 1);
       printf("factor() returned %d and :\n", numpFacts);
       for (j=0; j<numpFacts; j++)
-        printf("%" PRId32 " ", pFacts[j]);
+        printf("%ld ", pFacts[j]);
       printf("\n");
       exit(-1);
     }
@@ -1010,9 +1005,9 @@ ABexponentSum=0;
     /* tpol1 <-- (a+b\alpha) = (c_d*a + b*\hat{alpha})/c_d     */
     /*                       = c_d*a + b*bmultiplier* omega_1  */
     /***********************************************************/
-    mpz_set_si64(&tpol1->coef[0], a); 
+    mpz_set_si(&tpol1->coef[0], a); 
     mpz_mul(&tpol1->coef[0], &tpol1->coef[0], cd);
-    mpz_set_si64(&tpol1->coef[1], b);
+    mpz_set_si(&tpol1->coef[1], b);
     mpz_mul(&tpol1->coef[1], &tpol1->coef[1], bmultiplier);
     tpol1->degree = 1;
 //    e *= -1;
@@ -1030,16 +1025,16 @@ ABexponentSum += e;
     /* Keep track of what the final square should be. */
 #if 1
   /* This is the original code: */
-    mpz_set_si64(tmp, b);
+    mpz_set_si(tmp, b);
     mpz_mul(tmp, tmp, M->FB->y0);
-    mpz_set_si64(tmp2, a);
+    mpz_set_si(tmp2, a);
     mpz_mul(tmp2, tmp2, M->FB->y1);
     mpz_sub(tmp, tmp2, tmp);
 mpz_abs(tmp, tmp);
 #else
-    mpz_set_si64(tmp, b);
+    mpz_set_si(tmp, b);
     mpz_mul(tmp, tmp, M->FB->y0);
-    mpz_set_si64(tmp2, a);
+    mpz_set_si(tmp2, a);
     mpz_mul(tmp2, tmp2, M->FB->y1);
     mpz_sub(tmp, tmp2, tmp);
     
@@ -1054,7 +1049,7 @@ mpz_abs(tmp, tmp);
   }
   printf("The final square should be: ");
   mpz_out_str(stdout, 10, Zsquare);
-  printf("\nWe used %" PRId32 " (a,b) pairs.\n", numPairs);
+  printf("\nWe used %ld (a,b) pairs.\n", numPairs);
   if (Rindex < R1) fclose(fp);
   i=M->aSize-1;
   while ((i>=0) && (M->aExp[i]==0))
@@ -1063,14 +1058,14 @@ mpz_abs(tmp, tmp);
 
   for (i=0; i<=M->aExpLast; i++) {
     if (M->aExp[i]%2) {
-      fprintf(stderr, "Error: Odd exponent found: AFB[%" PRId32 "] has exponent %" PRId32 "!\n",
+      fprintf(stderr, "Error: Odd exponent found: AFB[%ld] has exponent %ld!\n",
               i, M->aExp[i]);
       exit(-1);
     }
   }
   for (i=0; i<M->spSize; i++) {
     if (M->spExp[i]%2) {
-      fprintf(stderr, "Error: Odd exponent found: Sp[%" PRId32 "] has exponent %" PRId32 "!\n",
+      fprintf(stderr, "Error: Odd exponent found: Sp[%ld] has exponent %ld!\n",
               i, M->spExp[i]);
       exit(-1);
     }
@@ -1123,10 +1118,10 @@ mpz_abs(tmp, tmp);
 
   i=0;
   j=0;
-  printf("There are %" PRId32 " exceptional prime ideals:\n", M->spSize);
+  printf("There are %ld exceptional prime ideals:\n", M->spSize);
   for (i=0; i<M->spSize; i++) {
     if (M->spExp[i] ) 
-      printf("[Sp. %" PRId32 "]^%" PRId32 " * ", i, M->spExp[i]);
+      printf("[Sp. %ld]^%ld * ", i, M->spExp[i]);
   }
   printf("\n");
   initOmegaEvalM(M); /* Initialize the evaluation constants. */
@@ -1140,7 +1135,7 @@ mpz_abs(tmp, tmp);
 }
 
 /***************************************************************************/
-void updateEps_ab(msqrt_t *M, s64 a, s64 b, int exponent)
+void updateEps_ab(msqrt_t *M, s32 a, s32 b, int exponent)
 /***************************************************************************/
 /* Update the embedding sizes with gamma <-- gamma*(a-b\alpha)^{exponent}. */
 /***************************************************************************/
@@ -1292,22 +1287,19 @@ void idealDivExact(mpz_mat_t *Res, mpz_mat_t *X, mpz_mat_t *Y, nf_t *N)
 
   mpz_mat_setID(&T, n);
   mpz_div(tmp, normX, g);
-
   for (i=0; i<n; i++)
     mpz_set(&T.entry[i][i], tmp);
-
   mpz_set_ui(tmp, 1);
   mpz_mat_moduleAdd(&I, tmp, X, tmp, &T, tmp);
   mpz_mat_setID(&T, n);
   mpz_div(tmp, normY, g);
-
   for (i=0; i<n; i++)
     mpz_set(&T.entry[i][i], tmp);
-
   mpz_set_ui(tmp, 1);
   mpz_mat_moduleAdd(&J, tmp, Y, tmp, &T, tmp);
     
-  idealDiv(Res, &I, &J, N);
+  return idealDiv(Res, &I, &J, N);
+
 }
 
 
@@ -1454,8 +1446,7 @@ int choose_ab_exponent(msqrt_t *M, relation_t *R)
 /* Choose an exponent for this (a,b) pair greedily.                    */
 /***********************************************************************/
 { int  i;
-  s64 pLoc;
-  s32 e, p, r;
+  s32 pLoc, e, p, r;
   double netNum=0.0, netDen=0.0, l;
 
   /* First, handle the `regular' factors. */
@@ -1481,7 +1472,7 @@ int choose_ab_exponent(msqrt_t *M, relation_t *R)
     if (p > 1) {
       pLoc = findLP(p, r, M);
       if ((M->AFB[pLoc].p != p)||(M->AFB[pLoc].r != r))  {
-        fprintf(stderr, "Error: Couldn't find (%" PRId32 ", %" PRId32 ") in the primes list!\n", p, r);
+        fprintf(stderr, "Error: Couldn't find (%ld, %ld) in the primes list!\n", p, r);
         exit(-1);
       }
       l = log((double)M->AFB[pLoc].p);
@@ -1504,8 +1495,7 @@ void updateFactorization_ab(msqrt_t *M, relation_t *R, int exponent)
 /* put through factRel()!                                              */
 /***********************************************************************/
 { int  i;
-  s64 pLoc;
-  s32 e, p, r;
+  s32 pLoc, e, p, r;
 
   /* First, handle the `regular' factors. */
   for (i=0; i<R->aFSize; i++) {
@@ -1525,7 +1515,7 @@ void updateFactorization_ab(msqrt_t *M, relation_t *R, int exponent)
     if (p > 1) {
       pLoc = findLP(p, r, M);
       if ((M->AFB[pLoc].p != p)||(M->AFB[pLoc].r != r))  {
-        fprintf(stderr, "Error: Couldn't find (%" PRId32 ", %" PRId32 ") in the primes list!\n", p, r);
+        fprintf(stderr, "Error: Couldn't find (%ld, %ld) in the primes list!\n", p, r);
         exit(-1);
       }
       M->aExp[pLoc] += exponent;
@@ -1706,7 +1696,7 @@ int chooseIdeal(mpz_mat_t *I, msqrt_t *M, int sl)
         p = M->AFB[index].p;
         r = M->AFB[index].r;
         if (M->aExp[index]%2) {
-          printf("chooseIdeal() sever error: odd exponent found: (%" PRId32 ", %" PRId32 ") e=%" PRId32 "!\n",p,r,(s32)M->aExp[index]);
+          printf("chooseIdeal() sever error: odd exponent found: (%ld, %ld) e=%ld!\n",p,r,(s32)M->aExp[index]);
           return -1;
         }
         e=0;
@@ -1736,7 +1726,7 @@ int chooseIdeal(mpz_mat_t *I, msqrt_t *M, int sl)
           cont = 0;
         else {
           if (M->spExp[indexE]%2) {
-            printf("chooseIdeal() severe error: odd exponent found! (Special ideal %" PRId32 ", e=%" PRId32 ")\n", indexE,M->spExp[indexE]);
+            printf("chooseIdeal() sever error: odd exponent found! (Special ideal %ld, e=%ld)\n", indexE,M->spExp[indexE]);
             return -1;
           }
           e=0;
@@ -1746,7 +1736,7 @@ int chooseIdeal(mpz_mat_t *I, msqrt_t *M, int sl)
             lognormI += _mpz_log(M->sPrimes[indexE].p);
           }
 #ifdef _DEBUG
-        sprintf(tmpStr, "EIdeal %" PRId32 " : e=%" PRId32 "/%" PRId32 "\n",indexE,e,M->spExp[indexE]);
+        sprintf(tmpStr, "EIdeal %ld : e=%ld/%ld\n",indexE,e,M->spExp[indexE]);
         strncat(idealSelStr, tmpStr, MAX_IDEAL_STR-strlen(idealSelStr));
 #endif
           M->spExp[indexE] -= 2*e;
@@ -1765,7 +1755,7 @@ int chooseIdeal(mpz_mat_t *I, msqrt_t *M, int sl)
         p = M->AFB[index].p;
         r = M->AFB[index].r;
         if (M->aExp[index]%2) {
-          printf("chooseIdeal() severe error: odd exponent found: (%" PRId32 ", %" PRId32 ") e=%" PRId32 "!\n",p,r,(s32)M->aExp[index]);
+          printf("chooseIdeal() sever error: odd exponent found: (%ld, %ld) e=%ld!\n",p,r,(s32)M->aExp[index]);
           return -1;
         }
         e=0;
@@ -1774,7 +1764,7 @@ int chooseIdeal(mpz_mat_t *I, msqrt_t *M, int sl)
           lognormI += log((double)p);
         }
 #ifdef _DEBUG
-        sprintf(tmpStr, "Ideal %" PRId32 " : (%" PRId32 ", %" PRId32 ") e=%" PRId32 "/%" PRId32 "\n",index,p,r,e,M->aExp[index]);
+        sprintf(tmpStr, "Ideal %ld : (%ld, %ld) e=%ld/%ld\n",index,p,r,e,M->aExp[index]);
         strncat(idealSelStr, tmpStr, MAX_IDEAL_STR-strlen(idealSelStr));
 #endif
         if (e > 0 ) {
@@ -1794,7 +1784,7 @@ int chooseIdeal(mpz_mat_t *I, msqrt_t *M, int sl)
           cont=0;
         else {
           if (M->spExp[indexE]%2) {
-            printf("chooseIdeal() severe error: odd exponent found! (Special ideal %" PRId32 ", e=%" PRId32 ")\n", indexE,M->spExp[indexE]);
+            printf("chooseIdeal() sever error: odd exponent found! (Special ideal %ld, e=%ld)\n", indexE,M->spExp[indexE]);
             return -1;
           }
           e=0;
@@ -1902,7 +1892,7 @@ int chooseDelta(mpz_poly delta, mpz_mat_t *I, int sl, msqrt_t *M)
         getCol(v, &H, j);
         computeEmbedding_ib(&sr, &si, v, i, M); /* (sr, si) <-- sigma_i(v). */
         entry = exp(lambda[i] + log(fabs(sr))); if (sr < 0) entry *= -1.0;
-        patched_mpz_set_d(&H.entry[d+i][j], entry);
+        mpz_set_d(&H.entry[d+i][j], entry);
       }
     } else {
       /* Quite probably a complex root. */
@@ -1910,9 +1900,9 @@ int chooseDelta(mpz_poly delta, mpz_mat_t *I, int sl, msqrt_t *M)
         getCol(v, &H, j);
         computeEmbedding_ib(&sr, &si, v, i, M); /* (sr, si) <-- sigma_i(v). */
         entry = exp(lambda[i]) * sr * M_SQRT2;
-        patched_mpz_set_d(&H.entry[d+i][j], entry);
+        mpz_set_d(&H.entry[d+i][j], entry);
         entry = exp(lambda[i]) * si * M_SQRT2;
-        patched_mpz_set_d(&H.entry[d+i+1][j], entry);
+        mpz_set_d(&H.entry[d+i+1][j], entry);
       }
       /***************************************************/
       /* Since the roots have been ordered, the next one */
@@ -2062,15 +2052,6 @@ void evalOmegaPoly(mpz_t eval, mpz_poly h, mpz_t x, mpz_t modulus, msqrt_t *M)
   
 
 /*********************************************************************/
-/*
-   STEN: g_M was previously defined inside montgomerySqrt() function as
-         local variable. However, msqrt_t type is too huge to be placed
-		 on stack. I decided to make it a global variable, thus making
-		 montgomerySqrt() function non-reentrant (it cann't be called from
-		 separate threads simultaneously).
-*/
-static msqrt_t g_M; 
-
 int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF, 
                    multi_file_t *lpF, nfs_fb_t *FB, nf_t *N)
 /*********************************************************************/
@@ -2085,12 +2066,9 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
 /* to already have an integral basis, the field discriminant, the    */
 /* index (these are all done by getIntegralBasis()) and the zeros.   */
 /*********************************************************************/
-/* STEN: Note that function is not reentrant as it uses some global  */
-/*       variables (see static definitons above).                    */
-/*********************************************************************/
-
 { s32          l;
   int           i, d = N->degree, retVal, sl, cont, finalTries;
+  msqrt_t       M; 
   mpz_poly      delta, beta, gamma;
   mpz_mat_t     I;
   mpz_t         tmp1, tmp2, gamma_denom, cdm, res, tmp3;
@@ -2115,22 +2093,22 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
 
   lastReportTime = sTime() - 10.0;
   /****** Initialize M. ******/
-  g_M.N = N; g_M.FB = FB;
+  M.N = N; M.FB = FB;
 
-  mpz_mod(tmp1, g_M.FB->n, g_M.FB->knownDiv);
+  mpz_mod(tmp1, M.FB->n, M.FB->knownDiv);
   if (mpz_sgn(tmp1)==0)
-    mpz_div(g_M.FB->n, g_M.FB->n, g_M.FB->knownDiv);
+    mpz_div(M.FB->n, M.FB->n, M.FB->knownDiv);
   mpz_set_ui(tmp1, 1);
 
-  if ((retVal = initMsqrt(&g_M, relsInDep, prelF, lpF)))
+  if ((retVal = initMsqrt(&M, relsInDep, prelF, lpF)))
     return retVal;
-  mpz_mul(cdm, &g_M.N->f->coef[g_M.N->degree], g_M.FB->m);
+  mpz_mul(cdm, &M.N->f->coef[M.N->degree], M.FB->m);
 
   mpz_init_set_ui(res, 1);
   mpz_set_ui(rSqrt, 0);
   mpz_set_ui(aSqrt, 0);
 
-  printf("Using monic polynomial T="); mpz_poly_print(stdout, "", g_M.N->T);
+  printf("Using monic polynomial T="); mpz_poly_print(stdout, "", M.N->T);
   printf("Integral basis is given by:\n");
   mpz_mat_print(stdout, N->W);
   printf("with denominator: "); mpz_out_str(stdout, 10, N->W_d);
@@ -2140,49 +2118,49 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
   l=0;
   finalTries=0;
   lastDiff=0.0;
-  normA = g_M.logNormGNum - g_M.logNormGDen;
+  normA = M.logNormGNum - M.logNormGDen;
   normN = 0.0;
   for (i=0; i<N->degree; i++) 
-    normN += g_M.log_eps[i];
+    normN += M.log_eps[i];
   lastNormA = normA; lastNormN = normN;
-  lastNormNum = g_M.logNormGNum; lastNormDen = g_M.logNormGDen;
+  lastNormNum = M.logNormGNum; lastNormDen = M.logNormGDen;
 
   while (cont) {
 
     /* Simplify numerator or denominator? */
-    if (fabs(g_M.logNormGNum) > fabs(g_M.logNormGDen))
+    if (fabs(M.logNormGNum) > fabs(M.logNormGDen))
       sl = 1;
     else
       sl = -1;
     /* On the other hand, we cannot let the HNum, HDen matrices */
     /* grow out of control:                                     */
-    lastHNormNum = logNorm(&g_M.Hnum, &g_M);
-    lastHNormDen = logNorm(&g_M.Hden, &g_M);
-    if ((lastHNormNum > 0.9*g_M.LLL_max_log) && (g_M.logNormGNum > 1.0))
+    lastHNormNum = logNorm(&M.Hnum, &M);
+    lastHNormDen = logNorm(&M.Hden, &M);
+    if ((lastHNormNum > 0.9*M.LLL_max_log) && (M.logNormGNum > 1.0))
       sl = 1;
-    if ((lastHNormDen > 0.9*g_M.LLL_max_log) && (g_M.logNormGDen > 1.0))
+    if ((lastHNormDen > 0.9*M.LLL_max_log) && (M.logNormGDen > 1.0))
       sl = -1;
     l++;
     now = sTime();
 
     if ((now > (lastReportTime + 5.0)) || 
-         ((g_M.logNormGDen < 1000.0) && (g_M.logNormGNum < 1000.0))) {
-      printf("step %" PRId32 ", sl=%2d, logGam=%1.2lf/%1.2lf, ", 
-              l, sl, g_M.logNormGNum, g_M.logNormGDen);
+         ((M.logNormGDen < 1000.0) && (M.logNormGNum < 1000.0))) {
+      printf("step %ld, sl=%2d, logGam=%1.2lf/%1.2lf, ", 
+              l, sl, M.logNormGNum, M.logNormGDen);
       printf("emb: ");
       for (i=0; i<N->degree; i++) 
-        printf("%1.2lf ", g_M.log_eps[i]);
-      normA = g_M.logNormGNum - g_M.logNormGDen;
+        printf("%1.2lf ", M.log_eps[i]);
+      normA = M.logNormGNum - M.logNormGDen;
       normN = 0.0;
       for (i=0; i<N->degree; i++) 
-        normN += g_M.log_eps[i];
+        normN += M.log_eps[i];
       diff = normA - normN;
       printf(", diff=%1.4lf\n", diff);
       lastReportTime = now;
     }
 
-    chooseIdeal(&I, &g_M, sl);
-    chooseDelta(delta, &I, sl, &g_M);
+    chooseIdeal(&I, &M, sl);
+    chooseDelta(delta, &I, sl, &M);
 #ifdef _LOUD_DEBUG
     ofp = fopen("maple.txt", "a");
     fprintf(ofp, "*(");
@@ -2190,65 +2168,65 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
     fprintf(ofp, ")^(%d)\n", sl);
     fclose(ofp);
 #endif
-    updateFactorization(&g_M, delta, &I, sl);
+    updateFactorization(&M, delta, &I, sl);
     mpz_set_ui(tmp1, 1);
-    updateCRT(&g_M, delta, tmp1, -2*sl);
+    updateCRT(&M, delta, tmp1, -2*sl);
 
-    evalOmegaPoly(tmp2, delta, cdm, g_M.FB->n, &g_M);
+    evalOmegaPoly(tmp2, delta, cdm, M.FB->n, &M);
     if (sl == -1) {
-      if (mpz_invert(tmp2, tmp2, g_M.FB->n)==0) {
-        evalOmegaPoly(tmp2, delta, cdm, g_M.FB->n, &g_M);
+      if (mpz_invert(tmp2, tmp2, M.FB->n)==0) {
+        evalOmegaPoly(tmp2, delta, cdm, M.FB->n, &M);
         printf("Error: "); mpz_out_str(stdout, 10, tmp2);
         printf(" is not invertible!\n");
         printf("gcd with n is : ");
-        mpz_gcd(tmp2, tmp2, g_M.FB->n);
+        mpz_gcd(tmp2, tmp2, M.FB->n);
         mpz_out_str(stdout, 10, tmp2); printf("\n");
         exit(-1);
       }
     }
     mpz_mul(res, res, tmp2);
-    mpz_mod(res, res, g_M.FB->n);
-    newTotal = fabs(g_M.logNormGDen) + fabs(g_M.logNormGNum) + fabs(logNorm(&g_M.Hnum, &g_M))
-               + fabs(logNorm(&g_M.Hden, &g_M));
+    mpz_mod(res, res, M.FB->n);
+    newTotal = fabs(M.logNormGDen) + fabs(M.logNormGNum) + fabs(logNorm(&M.Hnum, &M))
+               + fabs(logNorm(&M.Hden, &M));
     totalSize[l%20]=newTotal;
     if (l>20) {
       improve = totalSize[(l+1)%20]-totalSize[l%20];
-      if (improve < g_M.LLL_max_log) {
+      if (improve < M.LLL_max_log) {
         printf("Warning: Small improvement (%1.4lf) over 20 iterations!\n", improve);
-        g_M.LLL_max_log *= 0.9;
+        M.LLL_max_log *= 0.9;
       } else {
-        g_M.LLL_max_log = DEFAULT_LLLMAX_LOG;
+        M.LLL_max_log = DEFAULT_LLLMAX_LOG;
       }
     }
 
-    cont= ((g_M.logNormGDen>=0.5) || (g_M.logNormGNum > 0.5) ||
-          !(mpz_mat_isID(&g_M.Hnum)) || !(mpz_mat_isID(&g_M.Hden)));
+    cont= ((M.logNormGDen>=0.5) || (M.logNormGNum > 0.5) ||
+          !(mpz_mat_isID(&M.Hnum)) || !(mpz_mat_isID(&M.Hden)));
     /* If we're close, or there was too little improvement last time,
        increment the counter which will trigger an update of LLL_MAX.
     */
-    if (fabs(g_M.logNormGDen) + fabs(g_M.logNormGNum) < 20.0*g_M.LLL_max_log) {
+    if (fabs(M.logNormGDen) + fabs(M.logNormGNum) < 20.0*M.LLL_max_log) {
       finalTries++;
     } 
     /* If we get caught in a loop of the same leftover ideals,
        try to sneak out by mixing it up a bit.
     */
     if (finalTries > 50) {
-      g_M.LLL_max_log = DEFAULT_LLLMAX_LOG/2;
+      M.LLL_max_log = DEFAULT_LLLMAX_LOG/2;
     }
     if (finalTries > 100) {
-      g_M.LLL_max_log = DEFAULT_LLLMAX_LOG/4;
+      M.LLL_max_log = DEFAULT_LLLMAX_LOG/4;
     }
     if (finalTries > 150) {
-      g_M.LLL_max_log = DEFAULT_LLLMAX_LOG/10;
+      M.LLL_max_log = DEFAULT_LLLMAX_LOG/10;
     }
-    if (((finalTries>250)&&(g_M.logNormGDen < 0.01)) || (finalTries > 270)) 
+    if (((finalTries>250)&&(M.logNormGDen < 0.01)) || (finalTries > 270)) 
       /* Excessive - it shouldn't need nearly this many. */
       cont=0;
 #ifdef _DEBUG
-    normA = g_M.logNormGNum - g_M.logNormGDen;
+    normA = M.logNormGNum - M.logNormGDen;
     normN = 0.0;
     for (i=0; i<N->degree; i++) 
-      normN += g_M.log_eps[i];
+      normN += M.log_eps[i];
     diff = normA - normN;
     if (fabs(diff - lastDiff) > 2.0) {
       printf("**** Possible error: diff=%1.8lf vs. lastDiff=%1.8lf!\n", diff,lastDiff);
@@ -2256,14 +2234,14 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
       printf("  last normA = %1.5lf,   last normN = %1.5lf\n", lastNormA, lastNormN);
       printf("   new normA = %1.5lf,    new normN = %1.5lf\n\n", normA, normN);
       printf("last normNum = %1.5lf, last normDen = %1.5lf\n", lastNormNum, lastNormDen);
-      printf(" new normNum = %1.5lf,  new normDen = %1.5lf\n\n", g_M.logNormGNum, g_M.logNormGDen);
+      printf(" new normNum = %1.5lf,  new normDen = %1.5lf\n\n", M.logNormGNum, M.logNormGDen);
       printf("last normHNum= %1.5lf, last normHDen= %1.5lf\n", lastHNormNum, lastHNormDen);
-      printf(" new normHNum= %1.5lf,  new normHDen= %1.5lf\n\n", logNorm(&g_M.Hnum, &g_M),
-              logNorm(&g_M.Hden, &g_M));
+      printf(" new normHNum= %1.5lf,  new normHDen= %1.5lf\n\n", logNorm(&M.Hnum, &M),
+              logNorm(&M.Hden, &M));
       if (sl==1) printf("The numerator was being simplified.\n");
       else printf("The denominator was being simplified.\n");
       printf("delta = "); mpz_poly_print(stdout, "", delta); printf("\n");
-      norm_ib(tmp1, delta, g_M.N);
+      norm_ib(tmp1, delta, M.N);
       printf("norm(delta)="); mpz_out_str(stdout, 10, tmp1); 
       printf(", log=%1.5lf\n", _mpz_log(tmp1));
       printf("Ideal selection was as follows:\n%s\n", idealSelStr);
@@ -2272,43 +2250,43 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
     lastDiff=diff;
     lastNormA = normA; 
     lastNormN = normN;
-    lastHNormNum = logNorm(&g_M.Hnum, &g_M); 
-    lastHNormDen = logNorm(&g_M.Hden, &g_M);
-    lastNormNum = g_M.logNormGNum; 
-    lastNormDen = g_M.logNormGDen;
+    lastHNormNum = logNorm(&M.Hnum, &M); 
+    lastHNormDen = logNorm(&M.Hden, &M);
+    lastNormNum = M.logNormGNum; 
+    lastNormDen = M.logNormGDen;
 #endif
   }
   printf("-------------------------------------------------\n");
   printf("Iterative portion of square root computation done.\n");
-  printf("step %" PRId32 ", sl=%2d, logGam=%1.2lf/%1.2lf, ", 
-          l, sl, g_M.logNormGNum, g_M.logNormGDen);
+  printf("step %ld, sl=%2d, logGam=%1.2lf/%1.2lf, ", 
+          l, sl, M.logNormGNum, M.logNormGDen);
   printf("emb: ");
   for (i=0; i<N->degree; i++) 
-    printf("%1.2lf ", g_M.log_eps[i]);
-  normA = g_M.logNormGNum - g_M.logNormGDen;
+    printf("%1.2lf ", M.log_eps[i]);
+  normA = M.logNormGNum - M.logNormGDen;
   normN = 0.0;
   for (i=0; i<N->degree; i++) 
-    normN += g_M.log_eps[i];
+    normN += M.log_eps[i];
   printf(", diff=%1.4lf\n", normA - normN);
 
   printf("Final CRT residues:\n");
-  for (i=0; i<g_M.ipbSize; i++) {
-    mpz_out_str(stdout, 10, &g_M.q[i]);
+  for (i=0; i<M.ipbSize; i++) {
+    mpz_out_str(stdout, 10, &M.q[i]);
     printf(" : ");
-    mpz_poly_print(stdout, "", g_M.crtRes[i]);
+    mpz_poly_print(stdout, "", M.crtRes[i]);
   }
 #ifdef _DEBUG
   printf("Remaining ideals:\n");
   empty=1;
-  for (i=g_M.aSize-1; i>=0; i--) {
-    if (g_M.aExp[i] != 0) {
-      printf("(%" PRId32 ", %" PRId32 ")^%" PRId32 "\n", g_M.AFB[i].p, g_M.AFB[i].r, g_M.aExp[i]);
+  for (i=M.aSize-1; i>=0; i--) {
+    if (M.aExp[i] != 0) {
+      printf("(%ld, %ld)^%ld\n", M.AFB[i].p, M.AFB[i].r, M.aExp[i]);
       empty=0;
     }
   }
-  for (i=g_M.spSize-1; i>=0; i--) {
-    if (g_M.spExp[i] != 0) {
-      printf("(EIdeal %d)^%" PRId32 "\n", i, g_M.spExp[i]);
+  for (i=M.spSize-1; i>=0; i--) {
+    if (M.spExp[i] != 0) {
+      printf("(EIdeal %d)^%ld\n", i, M.spExp[i]);
       empty=0;
     }
   }
@@ -2320,23 +2298,23 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
   /* Now everything has been simplified enough that we should
      be able to lift what's left to Z_K and compute the square root.
   */
-  crtLift(gamma, gamma_denom, &g_M);
+  crtLift(gamma, gamma_denom, &M);
 
   printf("Residues lifted to a remaining gamma = ");
   printf("(1/"); mpz_out_str(stdout, 10, gamma_denom); printf(") * (");
   mpz_poly_print(stdout, "", gamma); printf("\n");
 
-  mpz_cdiv_qr(tmp2, tmp1, g_M.N->W_d, gamma_denom);
+  mpz_cdiv_qr(tmp2, tmp1, M.N->W_d, gamma_denom);
   if (mpz_sgn(tmp1)) {
     msgLog("", "Warning: W_d not divisible by gamma_denom!");
     printf("Warning: W_d not divisible by gamma_denom!\n");
     printf("This computation will most likely fail.\n");
   }
-  mpz_mul(tmp2, tmp2, g_M.N->W_d);
+  mpz_mul(tmp2, tmp2, M.N->W_d);
   for (i=0; i<=gamma->degree; i++) {
     mpz_mul(&gamma->coef[i], &gamma->coef[i], tmp2);
   }
-  if (finalSquareRoot(beta, gamma, &g_M)) {
+  if (finalSquareRoot(beta, gamma, &M)) {
     printf("*** Some serious error occurred computing remaining square root.\n");
     printf("*** This run will most likely fail!\n");
   }
@@ -2347,14 +2325,14 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
   /* it needs to be evaluated at c_d*m.            */
   /*************************************************/
   /* First correct for the factor of W_d^2 we multiplied in. */
-  mpz_invert(tmp2, g_M.N->W_d, g_M.FB->n);  
+  mpz_invert(tmp2, M.N->W_d, M.FB->n);  
   for (i=0; i<=beta->degree; i++) {
     mpz_mul(&beta->coef[i], &beta->coef[i], tmp2);
-    mpz_mod(&beta->coef[i], &beta->coef[i], g_M.FB->n);
+    mpz_mod(&beta->coef[i], &beta->coef[i], M.FB->n);
   }
-  mpz_poly_eval2(tmp2, beta, cdm, g_M.FB->y1);
+  mpz_poly_eval2(tmp2, beta, cdm, M.FB->y1);
   mpz_mul(res, res, tmp2);
-  mpz_mod(res, res, g_M.FB->n);
+  mpz_mod(res, res, M.FB->n);
 
   printf("Beta evaluated at m = "); mpz_out_str(stdout, 10, res); printf("\n");
   /* Now, we must correct for the extra factors of Y1 in the denominator
@@ -2362,23 +2340,23 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
   */
   printf("ABexponentSum = %ld\n", ABexponentSum);
   if (ABexponentSum < 0) {
-    mpz_invert(tmp2, g_M.FB->y1, g_M.FB->n);
-    mpz_powm_ui(tmp2, tmp2, -ABexponentSum/2, g_M.FB->n);
+    mpz_invert(tmp2, M.FB->y1, M.FB->n);
+    mpz_powm_ui(tmp2, tmp2, -ABexponentSum/2, M.FB->n);
   } else {
-    mpz_mod(tmp2, g_M.FB->y1, g_M.FB->n);
-    mpz_powm_ui(tmp2, tmp2, ABexponentSum/2, g_M.FB->n);
+    mpz_mod(tmp2, M.FB->y1, M.FB->n);
+    mpz_powm_ui(tmp2, tmp2, ABexponentSum/2, M.FB->n);
   }
   mpz_mul(res, res, tmp2);
   printf("Y1 corrected Beta   = "); mpz_out_str(stdout, 10, res); printf("\n");
 
 
   mpz_set(aSqrt, res);
-  mpz_mul(tmp2, res, res); mpz_mod(tmp2, tmp2, g_M.FB->n);
+  mpz_mul(tmp2, res, res); mpz_mod(tmp2, tmp2, M.FB->n);
   printf("Beta^2 == "); mpz_out_str(stdout, 10, tmp2); printf("\n");
-  printf("Rational square root: "); mpz_out_str(stdout, 10, g_M.ratSqrt); printf("\n");
-  mpz_mul(tmp2, g_M.ratSqrt, g_M.ratSqrt); mpz_mod(tmp2, tmp2, g_M.FB->n);
+  printf("Rational square root: "); mpz_out_str(stdout, 10, M.ratSqrt); printf("\n");
+  mpz_mul(tmp2, M.ratSqrt, M.ratSqrt); mpz_mod(tmp2, tmp2, M.FB->n);
   printf("    ^2 == "); mpz_out_str(stdout, 10, tmp2); printf("\n");
-  mpz_set(rSqrt, g_M.ratSqrt);
+  mpz_set(rSqrt, M.ratSqrt);
 
 
   mpz_poly_clear(delta); mpz_poly_clear(beta); mpz_poly_clear(gamma);
@@ -2386,23 +2364,23 @@ int montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF
   mpz_clear(tmp1); mpz_clear(tmp2); mpz_clear(gamma_denom); mpz_clear(cdm);
   mpz_clear(tmp3);
 
-  free(g_M.AFB);
-  for (i=0; i<g_M.spSize; i++)
-    clearIdeal(&g_M.sPrimes[i]);
-  free(g_M.sPrimes);
-  free(g_M.v_cd_sPrimes);
+  free(M.AFB);
+  for (i=0; i<M.spSize; i++)
+    clearIdeal(&M.sPrimes[i]);
+  free(M.sPrimes);
+  free(M.v_cd_sPrimes);
   for (i=0; i<MAX_DIST_FACTS; i++)
-    mpz_clear(&g_M.Cd.p[i]);
-  free(g_M.aExp); free(g_M.spExp);
-  mpz_mat_clear(&g_M.Hnum); mpz_mat_clear(&g_M.Hden);
-  for (i=0; i<g_M.ipbSize; i++) {
-    mpz_clear(&g_M.q[i]);
-    mpz_poly_clear(g_M.crtRes[i]);
+    mpz_clear(&M.Cd.p[i]);
+  free(M.aExp); free(M.spExp);
+  mpz_mat_clear(&M.Hnum); mpz_mat_clear(&M.Hden);
+  for (i=0; i<M.ipbSize; i++) {
+    mpz_clear(&M.q[i]);
+    mpz_poly_clear(M.crtRes[i]);
   }
-  mpz_mat_clear(&g_M.Beta);
-  mpz_clear(g_M.kappa);
+  mpz_mat_clear(&M.Beta);
+  mpz_clear(M.kappa);
   for (i=0; i<d; i++)
-    mpz_clear(&g_M.omegaEvalM[i]);
+    mpz_clear(&M.omegaEvalM[i]);
   return 0;  
 }  
 

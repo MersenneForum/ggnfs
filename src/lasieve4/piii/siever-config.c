@@ -10,13 +10,13 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
   02111-1307, USA.
   */
-#include "siever-config.h"
+#include "lasieve-asm.h"
                                                                                                        
 void siever_init(void)
 {
   init_montgomery_multiplication();
 }
-const uint32_t schedule_primebounds[N_PRIMEBOUNDS] =
+const ulong schedule_primebounds[N_PRIMEBOUNDS] =
   { 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000, 0x2000000, ULONG_MAX };
 
-const uint32_t schedule_sizebits[N_PRIMEBOUNDS] = { 20, 21, 22, 23, 24, 25, 32 };
+const ulong schedule_sizebits[N_PRIMEBOUNDS] = { 20, 21, 22, 23, 24, 25, 32 };

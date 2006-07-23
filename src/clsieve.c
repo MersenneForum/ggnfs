@@ -25,12 +25,7 @@
 #include <string.h>
 #include "ggnfs.h"
 
-#if defined(__GNUC__) && defined(__i386__)
-   #define GGNFS_x86_32_ATTASM_MMX
-#endif
-
 extern int clForceStop;
-extern int clShortOutput; /* Sten: -s command line parameter. */
 
 /* sieving takes place in L1-cache-size blocks */
 #define BLOCK_SIZE 65536
@@ -248,8 +243,7 @@ int clSieve(nfs_sieve_job_t *J)
       continue;
     }
 
-	root = J->b0;
-    MULMOD32(root, root, r, p);
+    MULMOD32(root, J->b0, r, p);
     conf.rfb[k].p = p;
     conf.rfb[k].r = r;
     conf.rfb[k].root = root;
@@ -267,13 +261,13 @@ int clSieve(nfs_sieve_job_t *J)
     if (conf.rfb[i].p>TINY_R_CUTOFF)
       break;
   }
-  conf.tiny_rfb_size = MIN(conf.rfb_size, i+1);
+  conf.tiny_rfb_size = i+1;
 
   for (i=0; i<conf.rfb_size; i++) {
     if (conf.rfb[i].p>BLOCK_SIZE)
       break;
   }
-  conf.med_rfb_size = MIN(conf.rfb_size, i+1);
+  conf.med_rfb_size = i+1;
 
   /************************************
    * fill in RFB large prime cutoffs  *
@@ -321,8 +315,7 @@ int clSieve(nfs_sieve_job_t *J)
       continue;
     }
 
-	root = J->b0;
-	MULMOD32(root, root, r, p);
+    MULMOD32(root, J->b0, r, p);
     conf.afb[k].p = p;
     conf.afb[k].r = r;
     conf.afb[k].root = root;
@@ -339,7 +332,7 @@ int clSieve(nfs_sieve_job_t *J)
         break;
     }
   }
-  conf.tiny_afb_size = MIN(conf.afb_size, i+1);
+  conf.tiny_afb_size = i+1;
 
   for (i=1,j=0; i<conf.afb_size; i++) {
     if (conf.afb[i].p!=conf.afb[i-1].p) {
@@ -347,7 +340,7 @@ int clSieve(nfs_sieve_job_t *J)
         break;
     }
   }
-  conf.med_afb_size = MIN(conf.afb_size, i+1);
+  conf.med_afb_size = i+1;
 
   mpz_init_set_si(conf.LP1_max_a, FB->maxP_a);
   mpz_init_set_si(conf.LP2_max_a, FB->maxP_a);
@@ -401,9 +394,9 @@ int clSieve(nfs_sieve_job_t *J)
   conf.rtable = (hashtable_t *)malloc(BLOCK_SIZE+16);
   conf.atable = (hashtable_t *)malloc(BLOCK_SIZE+16);
   conf.rcache = (update_t *)(conf.rtable+conf.block_window);
-  conf.rcache = (update_t *)((u8 *)(conf.rcache)+16-((size_t)(conf.rcache)%16));
+  conf.rcache = (update_t *)((u8 *)(conf.rcache)+16-((s32)(conf.rcache)%16));
   conf.acache = (update_t *)(conf.atable+conf.block_window);
-  conf.acache = (update_t *)((u8 *)(conf.acache)+16-((size_t)(conf.acache)%16));
+  conf.acache = (update_t *)((u8 *)(conf.acache)+16-((s32)(conf.acache)%16));
   conf.mempool = NULL;
 
   for (i=0; i<conf.block_window; i++) {
@@ -442,61 +435,52 @@ int clSieve(nfs_sieve_job_t *J)
   }
 
   msgLog("", "");
-  msgLog("", "hashtable: %" PRId32 " bins of size %d", conf.block_window, BLOCK_SIZE);
-  msgLog("", "hashtable cache: %" PRId32 " entries per bin", conf.cache_max);
+  msgLog("", "hashtable: %d bins of size %d", conf.block_window, BLOCK_SIZE);
+  msgLog("", "hashtable cache: %d entries per bin", conf.cache_max);
   msgLog("", "Rational factor base:");
   msgLog("", "base of logs: %4.3f", FB->rfb_log_base);
-  msgLog("", "factor base entries: %" PRId32 " (%3.1f MB)", conf.rfb_size,
+  msgLog("", "factor base entries: %d (%3.1f MB)", conf.rfb_size,
               (double)conf.rfb_size*sizeof(sieve_fb_t)/1e6);
-  msgLog("", "maximum factor base prime: %" PRId32, FB->rLim);
-  msgLog("", "primes at infinity: %" PRId32, conf.rfb_inf_size);
-  msgLog("", "hashed RFB entries: %" PRId32 " (%3.1f%%, max=%" PRId32 ")", 
+  msgLog("", "maximum factor base prime: %d", FB->rLim);
+  msgLog("", "primes at infinity: %d", conf.rfb_inf_size);
+  msgLog("", "hashed RFB entries: %d (%3.1f%%, max=%d)", 
                conf.rfb_size-conf.med_rfb_size, 
                100.0*(conf.rfb_size-conf.med_rfb_size)/conf.rfb_size,
                conf.rfb[conf.rfb_size-1].p);
-  msgLog("", "sieved RFB entries: %" PRId32 " (%3.3f%%, max=%" PRId32 ")", 
+  msgLog("", "sieved RFB entries: %d (%3.3f%%, max=%d)", 
                conf.med_rfb_size-conf.tiny_rfb_size, 
                100.0*(conf.med_rfb_size-conf.tiny_rfb_size)/conf.rfb_size,
                conf.rfb[conf.med_rfb_size-1].p);
-  msgLog("", "unsieved RFB entries: %" PRId32, conf.tiny_rfb_size);
-  msgLog("", "large prime cutoff: %" PRIu32 " bits", mpz_sizeinbase(conf.LP1_max_r,2)-1);
-  msgLog("", "trial factoring cutoff: %" PRId32 " bits", 
+  msgLog("", "unsieved RFB entries: %d", conf.tiny_rfb_size);
+  msgLog("", "large prime cutoff: %d bits", mpz_sizeinbase(conf.LP1_max_r,2)-1);
+  msgLog("", "trial factoring cutoff: %d bits", 
                (s32)(conf.cutoff2_r*M_LOG2E*FB->log_rlb)-1);
-  msgLog("", "2-large prime cutoff: %" PRIu32 "-%" PRIu32 " bits", 
+  msgLog("", "2-large prime cutoff: %d-%d bits", 
               mpz_sizeinbase(conf.LP2_min_r,2)-1,
               mpz_sizeinbase(conf.LP2_max_r,2)-1);
 
   msgLog("", "Algebraic factor base:");
   msgLog("", "base of logs: %4.3f", FB->afb_log_base);
-  msgLog("", "factor base entries: %" PRId32 " (%3.1f MB)", conf.afb_size,
+  msgLog("", "factor base entries: %d (%3.1f MB)", conf.afb_size,
               (double)conf.afb_size*sizeof(sieve_fb_t)/1e6);
-  msgLog("", "maximum factor base prime: %" PRId32, FB->aLim);
-  msgLog("", "primes at infinity: %" PRId32, conf.afb_inf_size);
-  msgLog("", "hashed AFB entries: %" PRId32 " (%3.1f%%, max=%" PRId32 ")", 
+  msgLog("", "maximum factor base prime: %d", FB->aLim);
+  msgLog("", "primes at infinity: %d", conf.afb_inf_size);
+  msgLog("", "hashed AFB entries: %d (%3.1f%%, max=%d)", 
                conf.afb_size-conf.med_afb_size, 
                100.0*(conf.afb_size-conf.med_afb_size)/conf.afb_size,
                conf.afb[conf.afb_size-1].p);
-  msgLog("", "sieved AFB entries: %" PRId32 " (%3.3f%%, max=%" PRId32 ")", 
+  msgLog("", "sieved AFB entries: %d (%3.3f%%, max=%d)", 
                conf.med_afb_size-conf.tiny_afb_size, 
                100.0*(conf.med_afb_size-conf.tiny_afb_size)/conf.afb_size,
                conf.afb[conf.med_afb_size-1].p);
-  msgLog("", "unsieved AFB entries: %" PRId32, conf.tiny_afb_size);
-  msgLog("", "large prime cutoff: %" PRIu32 " bits", mpz_sizeinbase(conf.LP1_max_a,2)-1);
-  msgLog("", "trial factoring cutoff: %" PRId32 " bits", 
+  msgLog("", "unsieved AFB entries: %d", conf.tiny_afb_size);
+  msgLog("", "large prime cutoff: %d bits", mpz_sizeinbase(conf.LP1_max_a,2)-1);
+  msgLog("", "trial factoring cutoff: %d bits", 
                (s32)(conf.cutoff2_a*M_LOG2E*FB->log_alb)-1);
-  msgLog("", "2-large prime cutoff: %" PRIu32 "-%" PRIu32 " bits", 
+  msgLog("", "2-large prime cutoff: %d-%d bits", 
               mpz_sizeinbase(conf.LP2_min_a,2)-1,
               mpz_sizeinbase(conf.LP2_max_a,2)-1);
   msgLog("", "");
-
-  /************************
-   * free unneeded arrays *
-   ************************/
-  
-  free(FB->rfb); FB->rfb = NULL;
-  free(FB->afb); FB->afb = NULL;
-  free(FB->rfb_log); FB->rfb_log = NULL;
-  free(FB->afb_log); FB->afb_log = NULL;
 
   /**********************
    * do all the work :) *
@@ -531,11 +515,11 @@ int doSieve(nfs_fb_t *FB, sieve_conf_t *conf, s32 b0, s32 b1)
  * Sieve lines for b = b0 to b1                            *
  ***********************************************************/
 { s32   i, j, k;
-  s32 med_rfb_size = conf->med_rfb_size;
-  s32 med_afb_size = conf->med_afb_size;
+  s32 rfb_size = conf->rfb_size;
+  s32 afb_size = conf->afb_size;
   sieve_fb_t *rfb = conf->rfb;
   sieve_fb_t *afb = conf->afb;
-  s32 old_rels = 0, rels = 0;
+  int old_rels = 0, rels = 0;
   double startTime = sTime();
   double currTime;
 
@@ -555,12 +539,10 @@ int doSieve(nfs_fb_t *FB, sieve_conf_t *conf, s32 b0, s32 b1)
     else
       rels += do1SieveEven(FB, conf, i);
 
-    /*********************************************
-     * update the roots for the next sieve line; *
-     * note that this has already happened for   *
-     * the large FB primes                       *
-     *********************************************/
-    for (j=0; j<med_rfb_size; j++) {
+    /**************************************
+     * update the roots for each FB prime *
+     **************************************/
+    for (j=0; j<rfb_size; j++) {
       s32 p = rfb[j].p;
       s32 root = rfb[j].root + rfb[j].r;
       if (root>=p)
@@ -568,7 +550,7 @@ int doSieve(nfs_fb_t *FB, sieve_conf_t *conf, s32 b0, s32 b1)
       rfb[j].root = root;
       rfb[j].next = root;
     }
-    for (j=0; j<med_afb_size; j++) {
+    for (j=0; j<afb_size; j++) {
       s32 p = afb[j].p;
       s32 root = afb[j].root + afb[j].r;
       if (root>=p)
@@ -619,7 +601,7 @@ int doSieve(nfs_fb_t *FB, sieve_conf_t *conf, s32 b0, s32 b1)
       break;
     }
   }
-  msgLog("", "Classical sieved [%" PRId32 ", %" PRId32 "]x[%" PRId32 ", %" PRId32 "]",
+  msgLog("", "Classical sieved [%ld, %ld]x[%ld, %ld]",
               -conf->sieve_size, conf->sieve_size, b0, i-1);
   flushSavefile(conf);
   return rels;
@@ -741,60 +723,45 @@ void fillHashtableOdd(sieve_conf_t *conf, s32 b, s32 sign)
     for (i=med_rfb_size; i<rfb_size; i++) {
       sieve_fb_t *fb = rfb + i;
       s32 p = fb->p;
-      s32 off = fb->root;
+      s32 off = fb->next;
       u8 logp = fb->logp;
 
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->rcache, conf->cache_max,
                       rhash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
     }
     for (i=med_afb_size; i<afb_size; i++) {
       sieve_fb_t *fb = afb + i;
       s32 p = fb->p;
-      s32 off = fb->root;
+      s32 off = fb->next;
       u8 logp = fb->logp;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->acache, conf->cache_max,
                       ahash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
     }
   }
   else {
     for (i=med_rfb_size; i<rfb_size; i++) {
       sieve_fb_t *fb = rfb + i;
       s32 p = fb->p;
-      s32 off = p - fb->root;
+      s32 off = p - fb->next;
       u8 logp = fb->logp;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->rcache, conf->cache_max,
                       rhash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
-
-      /* set up the next sieve line while the FB
-         structure is in cache */
-      off = fb->root + fb->r;
-      if (off>=p)
-        off -= p;
-      fb->root = off;
     }
     for (i=med_afb_size; i<afb_size; i++) {
       sieve_fb_t *fb = afb + i;
       s32 p = fb->p;
-      s32 off = p - fb->root;
+      s32 off = p - fb->next;
       u8 logp = fb->logp;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->acache, conf->cache_max,
                       ahash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
-      off = fb->root + fb->r;
-      if (off>=p)
-        off -= p;
-      fb->root = off;
     }
   }
 }
@@ -821,68 +788,56 @@ void fillHashtableEven(sieve_conf_t *conf, s32 b, s32 sign)
     for (i=med_rfb_size; i<rfb_size; i++) {
       sieve_fb_t *fb = rfb + i;
       s32 p = fb->p;
-      s32 off = fb->root;
+      s32 off = fb->next;
       u8 logp = fb->logp;
       if (off%2==0)
         off += p;
       off = off/2;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->rcache, conf->cache_max,
                       rhash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
     }
     for (i=med_afb_size; i<afb_size; i++) {
       sieve_fb_t *fb = afb + i;
       s32 p = fb->p;
-      s32 off = fb->root;
+      s32 off = fb->next;
       u8 logp = fb->logp;
       if (off%2==0)
         off += p;
       off = off/2;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->acache, conf->cache_max,
                       ahash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
     }
   }
   else {
     for (i=med_rfb_size; i<rfb_size; i++) {
       sieve_fb_t *fb = rfb + i;
       s32 p = fb->p;
-      s32 off = p - fb->root;
+      s32 off = p - fb->next;
       u8 logp = fb->logp;
       if (off%2==0)
         off += p;
       off = off/2;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->rcache, conf->cache_max,
                       rhash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
-      off = fb->root + fb->r;
-      if (off>=p)
-        off -= p;
-      fb->root = off;
     }
     for (i=med_afb_size; i<afb_size; i++) {
       sieve_fb_t *fb = afb + i;
       s32 p = fb->p;
-      s32 off = p - fb->root;
+      s32 off = p - fb->next;
       u8 logp = fb->logp;
       if (off%2==0)
         off += p;
       off = off/2;
-      if (off<sieve_size) {
+      if (off<sieve_size)
         add2Hashtable(conf->acache, conf->cache_max,
                       ahash+BLOCK_HASH(off), 
                       p, off, logp, &conf->mempool);
-      }
-      off = fb->root + fb->r;
-      if (off>=p)
-        off -= p;
-      fb->root = off;
     }
   }
 }
@@ -1245,12 +1200,16 @@ int doFactoringOdd(nfs_fb_t *FB, sieve_conf_t *conf,
     logTarget_a = conf->logTarget_a[i/A_NORM_INTERVAL];
 
     for (j=0; j<blocksize; j++) {
-      if (ablock[i+j]>logTarget_a &&
-          rblock[i+j]>logTarget_r &&
-          gcd(block_start+i+j, b)==1) {
-        rels += do1Factoring(FB, conf, i+j, b, 
-                            rblock[i+j], ablock[i+j], 
-			    block, first_block, sign);
+      s32 off = i+j;
+      s32 rbits = rblock[off];
+      s32 abits = ablock[off];
+
+      if (abits>logTarget_a &&
+          rbits>logTarget_r &&
+          gcd(block_start+off, b)==1) {
+        rels += do1Factoring(FB, conf, off, b, 
+                            rbits, abits, block, 
+                            first_block, sign);
       }
     }
   }
@@ -1341,11 +1300,15 @@ int doFactoringEven(nfs_fb_t *FB, sieve_conf_t *conf,
     logTarget_a = conf->logTarget_a[i/(A_NORM_INTERVAL/2)];
 
     for (j=0; j<blocksize; j++) {
-      if (ablock[i+j]>logTarget_a &&
-          rblock[i+j]>logTarget_r &&
-          gcd(2*(block_start+i+j)+1, b)==1) {
-        rels += do1Factoring(FB, conf, i+j, b, 
-                            rblock[i+j], ablock[i+j], block, 
+      s32 off = i+j;
+      s32 rbits = rblock[off];
+      s32 abits = ablock[off];
+
+      if (abits>logTarget_a &&
+          rbits>logTarget_r &&
+          gcd(2*(block_start+off)+1, b)==1) {
+        rels += do1Factoring(FB, conf, off, b, 
+                            rbits, abits, block, 
                             first_block, sign);
       }
     }
@@ -1848,8 +1811,7 @@ void flushCache(update_t *cache, hashtable_t *hash, script_t **mempool)
    * stores if they're available; they help a *lot*   *
    * on the athlon, but they're slower on the K8      *
    ****************************************************/
-
-#ifdef GGNFS_x86_32_ATTASM_MMX
+#if defined(__GNUC__) && defined(__i386__)
   for (i=0; i<(used & ~7); i+=8) {
     asm("movq 0(%1,%2,8), %%mm0 \n\t"
         "movq 8(%1,%2,8), %%mm1 \n\t"
@@ -1875,7 +1837,7 @@ void flushCache(update_t *cache, hashtable_t *hash, script_t **mempool)
         "movntq %%mm0, 0(%0,%2,8) "
         ::"r"(update_base), "r"(cache_base), "r"(i): "memory");
   }
-  asm("emms");
+  asm("femms");
 
 #else
   for (i=0; i<(used & ~7); i+=8) {
@@ -1961,46 +1923,40 @@ void clMakeOutputLine(char *str, relation_t *R)
 { int i, numR=0, numA=0;
   char s[128];
 
-  sprintf(str, "%" PRId64 ",%" PRId32, R->a, R->b);
-
-  if (clShortOutput == 0)
-  {
-    strcat(str, ":");
-
-    for (i=0; i<R->rFSize; i++) {
-      if (numR==0)
-        sprintf(s, "%" PRIx32, R->rFactors[i]);
-      else sprintf(s, ",%" PRIx32 "", R->rFactors[i]);
+  sprintf(str, "%ld,%ld:", R->a, R->b);
+  for (i=0; i<R->rFSize; i++) {
+    if (numR==0)
+      sprintf(s, "%lx", R->rFactors[i]);
+    else sprintf(s, ",%lx", R->rFactors[i]);
+    strcat(str, s);
+    numR++;
+  }
+  for (i=0; i<MAX_LARGE_RAT_PRIMES; i++) {
+    if (R->p[i] > 1) {
+      if (numR>0)
+        sprintf(s, ",%lx", R->p[i]);
+      else
+        sprintf(s, "%lx", R->p[i]);
       strcat(str, s);
       numR++;
     }
-    for (i=0; i<MAX_LARGE_RAT_PRIMES; i++) {
-      if (R->p[i] > 1) {
-        if (numR>0)
-          sprintf(s, ",%" PRIx32 "", R->p[i]);
-        else
-          sprintf(s, "%" PRIx32 "", R->p[i]);
-        strcat(str, s);
-        numR++;
-      }
-    }
-    strcat(str, ":");
-    for (i=0; i<R->aFSize; i++) {
-      if (numA==0)
-        sprintf(s, "%" PRIx32 "", R->aFactors[i]);
-      else sprintf(s, ",%" PRIx32 "", R->aFactors[i]);
+  }
+  strcat(str, ":");
+  for (i=0; i<R->aFSize; i++) {
+    if (numA==0)
+      sprintf(s, "%lx", R->aFactors[i]);
+    else sprintf(s, ",%lx", R->aFactors[i]);
+    strcat(str, s);
+    numA++;
+  }
+  for (i=0; i<MAX_LARGE_ALG_PRIMES; i++) {
+    if (R->a_p[i] > 1) {
+      if (numA>0)
+        sprintf(s, ",%lx", R->a_p[i]);
+      else
+        sprintf(s, "%lx", R->a_p[i]);
       strcat(str, s);
       numA++;
-    }
-    for (i=0; i<MAX_LARGE_ALG_PRIMES; i++) {
-      if (R->a_p[i] > 1) {
-        if (numA>0)
-          sprintf(s, ",%" PRIx32 "", R->a_p[i]);
-        else
-          sprintf(s, "%" PRIx32 "", R->a_p[i]);
-        strcat(str, s);
-        numA++;
-      }
     }
   }
 } 

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="matbuild-tpie"
 	ProjectGUID="{09584DF7-7448-4BA9-B99A-FD65DB25A179}"
-	RootNamespace="matbuild-tpie"
 	Keyword="Win32Proj"
+	SignManifests="true"
 	>
 	<Platforms>
 		<Platform
@@ -20,9 +20,10 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -43,19 +44,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src;..\..\..\src\experimental;..\..\..\..\tpie\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;GGNFS_TPIE"
+				AdditionalIncludeDirectories="..\..\..\..\tpie\include;..\;..\..\..\include;..\..\..\src;..\..\..\src\experimental"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -68,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib ..\..\..\..\tpie\lib\$(OutDir)\tpie.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib ..\..\..\..\tpie\lib\tpie.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -99,14 +96,15 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="x64\$(ConfigurationName)"
+			IntermediateDirectory="x64\$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -128,19 +126,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src;..\..\..\src\experimental;..\..\..\..\tpie\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;GGNFS_TPIE"
+				AdditionalIncludeDirectories="..\..\..\..\tpie\include;..\;..\..\..\include;..\..\..\src;..\..\..\src\experimental"
+				PreprocessorDefinitions="_DEBUG;_CONSOLE;WIN64;__x86_64__;GGNFS_HOST_GENERIC"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -153,11 +147,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib ..\..\..\..\tpie\lib\$(OutDir)\tpie.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib ..\..\..\..\tpie\lib\x64\tpie.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/matbuild-tpie.pdb"
+				ProgramDatabaseFile="$(OutDir)/matbuild.pdb"
 				SubSystem="1"
 				TargetMachine="17"
 			/>
@@ -184,14 +178,15 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -211,18 +206,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src;..\..\..\src\experimental;..\..\..\..\tpie\include"
+				AdditionalIncludeDirectories="..\..\..\..\tpie\include;..\;..\..\..\include;..\..\..\src;..\..\..\src\experimental"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -235,10 +225,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib ..\..\..\..\tpie\lib\$(OutDir)\tpie.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib ..\..\..\..\tpie\lib\tpie.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -267,14 +257,15 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="x64\$(ConfigurationName)"
+			IntermediateDirectory="x64\$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="UpgradeFromVC71.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -295,18 +286,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\;..\..\..\include;&quot;..\..\..\include-extra&quot;;..\..\..\src;..\..\..\src\experimental;..\..\..\..\tpie\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="..\..\..\..\tpie\include;..\;..\..\..\include;..\..\..\src;..\..\..\src\experimental"
+				PreprocessorDefinitions="NDEBUG;_CONSOLE;WIN64;__x86_64__;GGNFS_HOST_GENERIC"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
-				AssemblerListingLocation="$(IntDir)\"
-				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
-				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -319,7 +305,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib ..\..\..\..\tpie\lib\$(OutDir)\tpie.lib"
+				AdditionalDependencies="ws2_32.lib ..\ggnfslib\$(OutDir)\ggnfslib.lib ..\..\..\..\tpie\lib\x64\tpie.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -351,7 +337,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\bin\$(OutDir) mkdir ..\..\..\bin\$(OutDir)&#x0D;&#x0A;copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin\$(OutDir)&#x0D;&#x0A;"
+				CommandLine="copy /b $(OutDir)\$(ProjectName).exe ..\..\..\bin"
 			/>
 		</Configuration>
 	</Configurations>
@@ -364,47 +350,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\blanczos64-no-mmx.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\src\blanczos64.c"
-				>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\combparts.c"
 				>
 			</File>
 			<File
@@ -412,35 +358,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\intutils.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\experimental\llist_tpie.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\matbuild.c"
+				RelativePath="..\..\..\src\matbuild-tpie.c"
 				>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						CompileAs="0"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\matsave.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\matstuff.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\rellist.c"
 				>
 			</File>
 		</Filter>
@@ -450,11 +392,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\..\src\intutils.h"
+				RelativePath="..\..\..\src\experimental\app_config.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\rellist.h"
+				RelativePath="..\..\..\..\tpie\include\config.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\experimental\llist_tpie.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\experimental\templates.h"
 				>
 			</File>
 		</Filter>

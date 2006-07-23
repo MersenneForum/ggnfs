@@ -22,133 +22,15 @@
 #ifndef _GGNFS_H
 #define _GGNFS_H
 
-#define GGNFS_VERBOSE 1
+#if defined (__MINGW32__) || defined (MINGW32)
+#define _MSC_VER
+#endif
 
-#include "version.h"
 #include <gmp.h>
-
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
-#define _USE_MATH_DEFINES
-#define __STDC_FORMAT_MACROS
-
-#if defined( __CYGWIN__ ) || defined( _MSC_VER ) || defined(__MINGW32__) || defined (MINGW32) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-#define GGNFS_GNU_MISSING
-#else
-#define _GNU_SOURCE
-#endif
-
-#include <stdio.h>
 #include <stdarg.h>
-#include <stdlib.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
-
-typedef unsigned char uchar;
-
-#if defined (_MSC_VER)
-#include <basetsd.h>
-
-/* *signed* size type */
-#ifndef ssize_t
-typedef long ssize_t;
-#endif
-
-#if _MSC_VER < 1300 /* VC6 math.h lacks of these defines */
-	#ifndef M_LN2
-		#define M_LN2       0.69314718055994530942
-	#endif
-
-	#ifndef M_LOG2E
-		#define M_LOG2E     1.4426950408889634074
-	#endif
-
-	#ifndef M_PI
-		#define M_PI        3.14159265358979323846f
-	#endif
-
-	#ifndef M_SQRT2
-		#define M_SQRT2     1.41421356237309504880
-	#endif
-#endif
-
-#define int8_t  INT8
-#define uint8_t UINT8
-
-#define int16_t  INT16
-#define uint16_t UINT16
-
-#define int32_t INT32
-#define uint32_t UINT32
-
-#define int64_t INT64
-#define uint64_t UINT64
-
-#define PRId8 "I8d"
-#define PRIi8 "I8i"
-#define PRIo8 "I8o"
-#define PRIu8 "I8u"
-#define PRIx8 "I8x"
-#define PRIX8 "I8X"
-
-#define PRId16 "I16d"
-#define PRIi16 "I16i"
-#define PRIo16 "I16o"
-#define PRIu16 "I16u"
-#define PRIx16 "I16x"
-#define PRIX16 "I16X"
-
-#define PRId32 "I32d"
-#define PRIi32 "I32i"
-#define PRIo32 "I32o"
-#define PRIu32 "I32u"
-#define PRIx32 "I32x"
-#define PRIX32 "I32X"
-
-#define PRId64 "I64d"
-#define PRIi64 "I64i"
-#define PRIo64 "I64o"
-#define PRIu64 "I64u"
-#define PRIx64 "I64x"
-#define PRIX64 "I64X"
-
-#define SCNd32 "I32d"
-#define SCNi32 "I32i"
-#define SCNo32 "I32o"
-#define SCNu32 "I32u"
-#define SCNx32 "I32x"
-#define SCNX32 "I32X"
-
-#define SCNd64 "I64d"
-#define SCNi64 "I64i"
-#define SCNo64 "I64o"
-#define SCNu64 "I64u"
-#define SCNx64 "I64x"
-#define SCNX64 "I64X"
-
-#else
-
-#include <inttypes.h>
-
-#endif
-
-typedef uint16_t u16_t;
-typedef  int16_t i16_t;
-typedef uint32_t u32_t;
-typedef  int32_t i32_t;
-typedef uint64_t u64_t;
-typedef  int64_t i64_t;
-
-
-#if defined(__ppc__) || defined(__ppc64__)
-#define GGNFS_BIGENDIAN
-#endif
-
-#if !defined(__x86_64__) && !defined(__ppc64__) && !defined(__alpha__)
-/* #if _WORDSIZE == 32 */
-#define ULL_NO_UL
-#endif
+#include "version.h"
 
 /* This is just for a procrels hack. */
 #define BAD_LP_INDEX 0xFFFFFFFE
@@ -203,20 +85,23 @@ typedef  int64_t i64_t;
 #define MAX(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 #define MIN(_a, _b) ((_a) < (_b) ? (_a) : (_b))
 
-/* should be defined in inttypes.h.  If your system doesn't
-   have this, you'll need to define these and the printf/scanf
-   format specifiers (e.g. PRId32, SCNu64, etc) yourself */
-#define s32 int32_t
-#define s64 int64_t
-#define u32 uint32_t
-#define u64 uint64_t
-#define u8  uint8_t
-#define u16 uint16_t
+#ifndef LONG64
+typedef long s32;
+typedef unsigned long u32;
+typedef unsigned long long u64;
+#else
+typedef int s32;
+typedef unsigned int u32;
+typedef unsigned long u64;
+#endif
+
+typedef unsigned char u8;
+typedef unsigned short u16;
 
 
 /************************************************/
 typedef struct {
-  char prefix[1000];
+  char prefix[60];
   int  numFiles;
   s32 data1, data2; /* Used for whatever. */
 } multi_file_t;
@@ -251,8 +136,7 @@ typedef struct {
 /* the `rel_list' is for.                                        */
 /*****************************************************************/
 typedef struct {
-//  s32 a;
-  s64 a;
+  s32 a;
   s32 b;
   /* The fields below are filled n by getRFact() */
   s32  rFactors[MAX_RAT_FACTORS]; /* Rational factors dividing (a+bm). */
@@ -272,12 +156,12 @@ typedef struct {
 
 
 typedef struct {
-  u32  numRels, maxRels, maxDataSize;
-  u32 *relIndex; /* relIndex[i] is the index of the start of relation 'i' in
+  s32  numRels, maxRels, maxDataSize;
+  s32 *relIndex; /* relIndex[i] is the index of the start of relation 'i' in
                      the following array: */
   s32 *relData;  /* This is where all the relation data is held, in a very
-                    specific format: see rels.c for the format description.
-                 */
+                     specific format: see rels.c for the format description.
+                   */
 } rel_list;
 
 /* This is a more generic structure, (which will be) used
@@ -290,9 +174,12 @@ typedef struct {
   s32  numFields;
 } llist_t;
 
+
 typedef struct {
   s32 x, y;
 } lpair_t;
+
+
 
 typedef struct {
   char       name[MAX_NAMESIZE];
@@ -307,7 +194,7 @@ typedef struct {
   mpz_t      disc;     /* not set unless it's needed. */
   mpz_t      cd;
   mpz_t      knownDiv;
-  u32       rfb_size;   /* rational factor base size  */
+  s32       rfb_size;   /* rational factor base size  */
   s32       rLim;       /* rational factor base limit. */
   s32      *rfb;        /* rational factor base: rfb[2k]=p_k, rfb[2k+1] = m (mod p_k). */
   double     rfb_log_base, log_rlb;
@@ -315,21 +202,22 @@ typedef struct {
   double     rfb_lambda; /* Franke's lambda; I'll explain later. */
 
   double     afb_log_base, log_alb;
-  u32       afb_size;   /* algebraic factor base size  */
+  s32       afb_size;   /* algebraic factor base size  */
   double     afb_lambda; /* Franke's lambda; I'll explain later. */
   s32      *afb;        /* algebraic factor base: afb[2k]=p_k, afb[2k+1]=r_k (root of 'f' mod p_k). */
-  u32       aLim;       /* algebraic factor base limit. */
+  s32       aLim;       /* algebraic factor base limit. */
   int       *afb_log;    /* fixed-point log approximations */
   int        afb_log_ff; /* fudge-factor for sieving.   */
   s32       qcb_size;   /* quadratic character base size */
   s32      *qcb;        /* quadratic character base. Formatted same as afb. */
-  u32       maxP_r;     /* Max large (leftover) rational prime */
-  u32       maxP_a;     /* Max large (leftover) algebraic prime size */
+  s32       maxP_r;     /* Max large (leftover) rational prime */
+  s32       maxP_a;     /* Max large (leftover) algebraic prime size */
   int        maxLP;      /* Max # of large rational primes. */
   int        maxLPA;     /* Max # of large algebraic primes. */
   int        MFB_r;      /* Bits in largest value to factor into large primes */
   int        MFB_a;      /* Bits in largest value to factor into large primes */
 } nfs_fb_t;
+
 
 typedef struct {
   nfs_fb_t *FB;
@@ -349,7 +237,7 @@ typedef struct {
   mpz_t         unfactored;
   __mpz_struct *factors;
   int          *exponents;
-  unsigned int  size;
+  int           size;
   int           sign;
 } mpz_fact_t;
 
@@ -377,6 +265,7 @@ typedef struct {
   char     fbName[MAXFNAMESIZE+1];
   int      nDigits;
 } nfs_sieve_job_t;
+
   
 typedef struct {
   s32 p;
@@ -402,6 +291,7 @@ typedef struct {
   int      e;     /* valuation of <p> at this ideal. */
   int      f;     /* This ideal has norm p^f. */
 } prime_id_t;
+
 
 typedef struct {
   mpz_poly      f;      /* NFS polynomial, f=c_0 + c_1x + ... + c_dx^d. */
@@ -439,31 +329,18 @@ typedef struct {
   s32  numDenseBlocks;
 } nfs_sparse_mat_t;
 
-/***********************************************************/
-/* This structure is for columns that are being processed. */
-/* Before processing, we know only the relations that      */
-/* comprise each column. After processing, we know all the */
-/* nonzero rows of the matrix (i.e., the primes appearing  */
-/* with odd exponent and the QCB (sign bit is in QCB)).    */
-/* During processing, we will know some of each. That is,  */
-/* we might have already replaced some relations with their*/
-/* factorizations, but not yet all of them. These data are */
-/* what will be stored in the file cols.np.                */
-/***********************************************************/
-typedef struct {
-  s32 numRels;
-  s32 numPrimes;
-  s32 Rels[MAX_RELS_IN_FF];
-  s32 QCB[2];
-  s32 rows[MAX_ROWS_IN_COL];
-} column_t;
+
+
 
 /* matstuff.c */
-int getDependencies(nfs_sparse_mat_t *M, llist_t *C, s32 *deps, s32 origC, long testMode);
+int getDependencies(nfs_sparse_mat_t *M, llist_t *C, s32 *deps);
 int writeSparseMat(char *fname, nfs_sparse_mat_t *M);
 int readSparseMat(nfs_sparse_mat_t *M, char *fname);
-int checkMat(nfs_sparse_mat_t *M, s32 *delCols, s32 *numDel);
-s32 matrixWeight(nfs_sparse_mat_t *M);
+int cm_init(llist_t *C, nfs_sparse_mat_t *M);
+int cm_removeCols(llist_t *C, s32 *cols, s32 numCols);
+int removeCols(nfs_sparse_mat_t *M, llist_t *C, s32 *cols, s32 m);
+int pruneMatrix(nfs_sparse_mat_t *M, s32 minExtraCols, double wtFactor, llist_t *C);
+
 
 /* mpz_poly.c */
 void   mpz_poly_init(mpz_poly f);
@@ -490,7 +367,7 @@ int    mpz_poly_mod_pp(mpz_poly r, mpz_poly a, mpz_poly b, mpz_t p);
 int    mpz_poly_gcd(mpz_poly g, mpz_poly h, mpz_t p);
 int    mpz_poly_modp(poly_t res, mpz_poly q, s32 p);
 int    mpz_polyCoprime(mpz_poly f, mpz_poly g, mpz_t p);
-s32    mpz_poly_evalModp(mpz_poly h, s32 p, s32 x);
+s32   mpz_poly_evalModp(mpz_poly h, s32 p, s32 x);
 void   mpz_poly_mul(mpz_poly res, mpz_poly op1, mpz_poly op2);
 void   mpz_poly_add(mpz_poly res, mpz_poly op1, mpz_poly op2);
 void   mpz_poly_mulmod(mpz_poly res, mpz_poly op1, mpz_poly op2, mpz_poly mod);
@@ -501,6 +378,7 @@ int    mpz_poly_irreduciblelike_modp(mpz_poly _f, mpz_t p);
 int    mpz_poly_div(mpz_poly q, mpz_poly x, mpz_poly y, mpz_t p);  
 int    mpz_poly_fact(mpz_poly *Pi, int *exps, mpz_poly A, mpz_t p);
 int    mpz_poly_inv(mpz_poly inv, mpz_poly f, mpz_poly m, mpz_t p);
+
 
 int    Zalpha_sqrt(mpz_poly res, mpz_poly a, mpz_poly _f, mpz_t N, mpz_t p);
 
@@ -567,18 +445,7 @@ s32   powMod(s32 op, s32 n, s32 p);
 s32   inverseModP(s32 n, s32 p);
 s32   gcd(s32 x, s32 y);
 int    sqrtModP(mpz_t res, mpz_t x2, mpz_t p);
-
-//int    mpz_evalF(mpz_t res, s32 a, s32 b, mpz_poly f);
-int    mpz_evalF(mpz_t res, s64 a, s32 b, mpz_poly f);
-
-#ifdef LONG64
-#define mpz_mul_si64(mp1, mp2, x) mpz_mul_si(mp1, mp2, x)
-#define mpz_set_si64(mp, x) mpz_set_si(mp, x)
-#else
-void   mpz_mul_si64( mpz_t rop, mpz_t op1, s64 a);
-void   mpz_set_si64( mpz_t rop, s64 a);
-#endif
-
+int    mpz_evalF(mpz_t res, s32 a, s32 b, mpz_poly f);
 double mpz_evalF_d(double x, double y, mpz_poly f);
 int    fplog_evalF(s32 a, s32 b, nfs_fb_t *FB);
 int    fplog_mpz(mpz_t k, double log_of_base);
@@ -620,20 +487,24 @@ int createFB(nfs_fb_t *FB, char *ofname);
 	
 	
 /* muldmod32.s */
-#ifdef GGNFS_HOST_GENERIC
-	static inline s32 mulmod32(uint32_t x, uint32_t y, uint32_t m)
-	{
-		return (s32)(((uint64_t)x*(uint64_t)y)%m);
-	}
-#elif defined( _MSC_VER )
-	extern s32 mulmod32(s32 op1, s32 op2, s32 modulus);
+#ifndef _MSC_VER
+#ifdef __ppc__
+#include <stdint.h>
+static inline s32 mulmod32(uint32_t x, uint32_t y, uint32_t m)
+{
+   return ((uint64_t)x*(uint64_t)y%m);
+}
 #else
-	extern s32 mulmod32(s32 op1, s32 op2, s32 modulus) asm("mulmod32");
+extern s32 mulmod32(s32 op1, s32 op2, s32 modulus) asm("mulmod32");
+#endif
+#else
+extern s32 mulmod32(s32 op1, s32 op2, s32 modulus);
 #endif
 
 
 
 /* clsieve.c */
+int forceStop;
 int clSieve(nfs_sieve_job_t *J);
 
 /* squfof.c */
@@ -647,7 +518,7 @@ int latSieve(s32 *candidates, int maxCands, nfs_fb_t *FB,
 /* smintfact.c */
 int   smallIntFactor(u32 *factors, int *numFactors, mpz_t _t);
 int   factor_using_pollard_rho (u32 *factors, int *numFactors, mpz_t n, int a_int);
-int   factor(u32 *factors, mpz_t n, int useTrialDivision);
+int   factor(s32 *factors, mpz_t n, int useTrialDivision);
 
 
 /* fbmisc.c */
@@ -698,7 +569,10 @@ int  ll_read(llist_t *C, char *fname);
 
 
 /* combparts.c */
-u32 combParts(llist_t *R, llist_t *P, u32 maxRelsInFF, u32 minFF, u32 minFull);
+s32 combParts(llist_t *R, llist_t *P, int maxRelsInFF, s32 minFF);
+
+
+
 
 /* rels.c */
 #define GETNUMRFB(_s) ((_s)>>24)
@@ -712,24 +586,27 @@ u32 combParts(llist_t *R, llist_t *P, u32 maxRelsInFF, u32 minFF, u32 minFull);
 #define SETNUMSPB(_s,_n) (_s = (_s&0xFFFF00FF)^((((s32)(_n)&0x000000FF)<<8)))
 #define SETNUMLRP(_s,_n) (_s = (_s&0xFFFFFF3F)^((((s32)(_n)&0x00000003)<<6)))
 #define SETNUMLAP(_s,_n) (_s = (_s&0xFFFFFFCF)^((((s32)(_n)&0x00000003)<<4)))
-#define S32S_IN_ENTRY(_s) (2*GETNUMRFB(_s)+2*GETNUMAFB(_s)+2*GETNUMSPB(_s)+GETNUMLRP(_s)+2*GETNUMLAP(_s) + 6)
-/* In the above, the +6 is to count also the: (1 size field) + (a,b fields) + (2 qcb fields) */
+#define S32S_IN_ENTRY(_s) (2*GETNUMRFB(_s)+2*GETNUMAFB(_s)+2*GETNUMSPB(_s)+GETNUMLRP(_s)+2*GETNUMLAP(_s) + 5)
+/* In the above, the +5 is to count also the: (1 size field) + (a,b fields) + (2 qcb fields) */
 int   factRel(relation_t *R, nf_t *N);
 int   factRelQ(relation_t *R, nf_t *N, s32 FBIndex);
-int   factRels_clsieved(relation_t *R, size_t numRels, nf_t *N);
+int   factRels_clsieved(relation_t *R, int numRels, nf_t *N);
 int   completePartialRelFact(relation_t *R, nf_t *N, s32 rTDiv, s32 aTDiv);
 int   relConvertToData(s32 *data, relation_t *R);
 int   dataConvertToRel(relation_t *R, s32 *data);
+void  readRawS32(s32 *w, FILE *fp);
+void  writeRawS32(FILE *fp, s32 *w);
 int   writeRel(FILE *fp, s32 *relData);
 int   writeRelList(char *fname, rel_list *L);
 int   readRel(relation_t *R, FILE *fp);
 int   readRelList(rel_list *L, char *fname);
 int   parseOutputLine(relation_t *R, char *str, nfs_fb_t *FB);
-void makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB, int short_form);
+void  makeOutputLine(char *str, relation_t *R, nfs_fb_t *FB);
 s32  lookupRFB(s32 p, nfs_fb_t *FB);
 s32  lookupAFB(s32 p, s32 r, nfs_fb_t *FB);
-#define readRaw32(w,fp)  fread((w),sizeof(s32),1,(fp))
-#define writeRaw32(fp,w) fwrite((w),sizeof(s32),1,(fp))
+
+
+
 
 /* blanczos.c */
 typedef void (* MAT_MULT_FUNC_PTR32)(u32 *Product, u32 *x, void *P);
@@ -744,8 +621,7 @@ void MultB_T32(u32 *Product, u32 *x, void *P);
 
 typedef void (* MAT_MULT_FUNC_PTR64)(u64 *Product, u64 *x, void *P);
 int    blockLanczos64(u64 *deps, MAT_MULT_FUNC_PTR64 LeftMul, 
-                      MAT_MULT_FUNC_PTR64 RightMul, void *P, s32 n,
-		      long testMode);
+                      MAT_MULT_FUNC_PTR64 RightMul, void *P, s32 n);
 void   seedBlockLanczos(s32 seed);
 /* I will do away with these prototypes later. */
 void MultB64(u64 *Product, u64 *x, void *P);
@@ -769,36 +645,22 @@ void   getIdealHNF_ib(mpz_mat_t *H, mpz_t p, mpz_poly a, s32 e, nf_t *N);
 void   norm_std(mpz_t n, mpz_poly a, nf_t *N);
 void   norm_ib(mpz_t n, mpz_poly a, nf_t *N);
 void   idealHNF_ib(mpz_mat_t *H, mpz_poly a, nf_t *N);
-void   idealHNF_ib_ab(mpz_mat_t *H, s64 a, s32 b, nf_t *N);
+void   idealHNF_ib_ab(mpz_mat_t *H, s32 a, s32 b, nf_t *N);
 int    stdtoib(mpz_poly res, mpz_poly op, nf_t *N);
 void   getTrace_ib(mpz_t t, mpz_poly a, nf_t *N);
 
 
 /* fbgen.c */
-u32 root_finder(u32 * root_buf, mpz_t * A, u32 adeg, u32 p);
+s32 root_finder(s32 * root_buf, __mpz_struct * A, s32 adeg, s32 p);
+
+
+
 
 int    factorN(mpz_t p, mpz_t q, s32 *dep, relation_t *R, nfs_fb_t *FB, nf_t *N);
 int    montgomerySqrt(mpz_t rSqrt, mpz_t aSqrt, s32 *relsInDep, multi_file_t *prelF,
                       multi_file_t *lpF, nfs_fb_t *FB, nf_t *N);
 double dickman(double x);
 double dickmanStrong(double x, int numTerms);
-
-/* assess.c */
-void init_assess(double b0, double b1, double area, unsigned int pb);
-unsigned int invert(unsigned int a, unsigned int p);  /* 0<b<p */
-void murphy_en(double *me, int deg0, double *dbl_coeff0, int deg1, double *dbl_coeff1,
-               double alpha0, double alpha1, double skewness, int nsm);
-void murphy_e(double *me, int deg0, double *dbl_coeff0, int deg1, double *dbl_coeff1,
-              double alpha0, double alpha1, double skewness);
-int compute_alpha(double *alpha, int deg, unsigned int **coeffmod, mpz_t *gmp_coeff, double alpha_targ);
-void compute_alpha_exact(double *alpha, int deg, unsigned int **coeffmod, mpz_t *gmp_coeff, unsigned int pb);
-  	       
-/* roots.c */
-int find_optima(int *deg, double **coeff, double skewness, double **optima);
-
-/* primes.c */
-void prime_table_init();
-unsigned int get_next_prime();
 
 
 /*******************************************************/
@@ -819,36 +681,13 @@ unsigned int get_next_prime();
 
 #define NFS_HASH_Q(_a, _b, _k) (((u32)(3*(_a/2)+(_b)))%(_k))
 
-/*
- * STEN: GGNFS_HOST_GENERIC macro can be defined when compiling in MS VC x64 
- * configuration so check if it is defined first, then check for _MSC_VER 
- */
-#if defined(GGNFS_HOST_GENERIC) 
+#if defined(_MSC_VER) || defined(__ppc__)
 #define MULMOD32(_res, _op1, _op2, _mod) _res = mulmod32(_op1, _op2, _mod)
-#elif defined ( _MSC_VER )
-#define MULMOD32(_res, _op1, _op2, _mod) __asm mov	eax,_op1 __asm imul	_op2 __asm idiv	_mod __asm mov	_res,edx
 #else
 #define MULMOD32(_res, _op1, _op2, _mod) \
           asm(" imull %2\n\t idivl %3\n\t movl %%edx, %0"  \
                : "=mq" (_res)  \
                : "a" (_op1) , "mb" (_op2) , "mc" (_mod) : "%edx");     
-#endif
-
-
-/* matsave.c */
-extern volatile int matsave_interval;
-
-u32 matresume(s32 n, u64 *Wi, u64 *Wi_1, u64 *Wi_2, u64 *T_1,
-              u64 *tmp, u64 *U_1, u64 *tmp2, int *Si, int *Si_1,
-              u64 *X, u64 *Y, u64 *Vi, u64 *Vi_1, u64 *Vi_2);
-int matsave(u32 iterations, s32 n, const u64 *Wi, const u64 *Wi_1,
-            const u64 *Wi_2, const u64 *T_1, const u64 *tmp,
-            const u64 *U_1, const u64 *tmp2, const int *Si,
-            const int *Si_1, const u64 *X, const u64 *Y,
-            const u64 *Vi, const u64 *Vi_1, const u64 *Vi_2);
-
-#if defined (__cplusplus)
-}
 #endif
 
 #endif

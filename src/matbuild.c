@@ -28,19 +28,20 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "if.h"
 
-#if !defined(_MSC_VER)
+#ifndef _MSC_VER 
 #include <sys/time.h>
 #endif
-
 #include "ggnfs.h"
 
-#include "rellist.h"
-#include "intutils.h"
+
+
 
 #define MAX_LPMEM_ALLOC 256000000
 #define MAX_SPAIRS_ALLOC 12000000
+
+/* These are in s32's. */
+#define IO_BUFFER_SIZE  2*1024*1024
 
 #define MAX_PBUF_RAM 32000000
 #define DEFAULT_QCB_SIZE 62
@@ -51,22 +52,44 @@
 #define DEFAULT_COLNAME "cols"
 #define DEFAULT_LPI_NAME "lpindex"
 #define DEFAULT_PRELPREFIX "rels.bin"
+#define DEFAULT_COLNAME "cols"
+#define DEFAULT_WT_FACTOR 0.7
 
-#define USAGE " -fb <fname> -prel <fname> -newrel <fname> [-cols <fname>] [-qs <qcb size>] [-v]\n"\
-"-fb <fname>         : Factor base.\n"\
-"-prel <file prefix> : File name prefix for input of processed relations.\n"\
-"-minff <int>        : Minimum number of FF's (prevent R-S wt. reduction and\n"\
-"                      writing of the column files if there are fewer than this).\n"\
-"-maxrelsinff <int>  : Max relation-set weight. 0 = automatic adjustment\n"
+#define USAGE " -fb <fname> -prel <fname> -newrel <fname> [-qs <qcb size>] [-v]\n"\
+"-fb <fname>           : Factor base.\n"\
+"-prel <file prefix>   : File name prefix for input of processed relations.\n"\
+"-minff <int>          : Minimum number of FF's (prevent R-S wt. reduction and\n"\
+"                        writing of the column files if there are fewer than this).\n"\
+"-maxrelsinff <int>    : Max relation-set weight.\n"
 
 #define START_MSG \
 "\n"\
 " __________________________________________________________ \n"\
 "|        This is the matbuild program for GGNFS.           |\n"\
-"| Version: %-25s                       |\n"\
+"| Version: %-15s                                 |\n"\
 "| This program is copyright 2004, Chris Monico, and subject|\n"\
 "| to the terms of the GNU General Public License version 2.|\n"\
 "|__________________________________________________________|\n"
+
+/***********************************************************/
+/* This structure is for columns that are being processed. */
+/* Before processing, we know only the relations that      */
+/* comprise each column. After processing, we know all the */
+/* nonzero rows of the matrix (i.e., the primes appearing  */
+/* with odd exponent and the QCB (sign bit is in QCB)).    */
+/* During processing, we will know some of each. That is,  */
+/* we might have already replaced some relations with their*/
+/* factorizations, but not yet all of them. These data are */
+/* what will be stored in the file cols.np.                */
+/***********************************************************/
+typedef struct {
+  s32 numRels;
+  s32 numPrimes;
+  s32 Rels[MAX_RELS_IN_FF];
+  s32 QCB[2];
+  s32 rows[MAX_ROWS_IN_COL];
+} column_t;
+
 
 
 #define CC_OFF  0
@@ -74,16 +97,380 @@
 #define CC_AUTO 2
 
 /***** Globals *****/
-int  discFact=1, cycleCount=CC_AUTO;
-u32  initialFF=0, initialRelations=0, finalFF=0;
-u32  totalLargePrimes=0, minFF;
-
+int  verbose=0, discFact=1, cycleCount=CC_AUTO;
+s32  initialFF=0, initialRelations=0, finalFF=0;
+s32  totalLargePrimes=0;
+s32  minFF;
 long relsNumLP[8]={0,0,0,0,0,0,0,0};
+s32  delCols[2048], numDel=0;
 
 int cmp2S32s(const void *a, const void *b);
-#ifdef GGNFS_TPIE
-u32 combParts_tpie(llist_t *lR, llist_t *lP, u32 maxRelsInFF, u32 minFF, u32 minFull);
-#endif
+
+
+/******************************************************/
+void readColSF(column_t *C, FILE *fp)
+/******************************************************/
+{ 
+  fread(&C->numPrimes, sizeof(s32), 1, fp);
+  fread(&C->QCB, sizeof(s32), 2, fp);
+  if (C->numPrimes < MAX_ROWS_IN_COL) 
+    fread(&C->rows, sizeof(s32), C->numPrimes, fp);
+  else {
+    printf("readColSF() : MAX_ROWS_IN_COL exceeded! Cannot continue!\n");
+    exit(-1);
+  }
+}
+
+/*********************************************************/
+int cmp2L1(const void *a, const void *b)
+/*********************************************************/
+{ s32 *A=(s32 *)a, *B=(s32 *)b;
+
+  if (A[0] < B[0]) return -1;
+  if (A[1] > B[1]) return 1;
+  return 0;
+}
+
+/*********************************************************/
+int colsAreEqual(nfs_sparse_mat_t *M, s32 c0, s32 c1)
+/*********************************************************/
+{ int i, j, found;
+  s32 w0, w1, e;
+
+  w0 = M->cIndex[c0+1]-M->cIndex[c0];
+  w1 = M->cIndex[c1+1]-M->cIndex[c1];
+  if (w0 != w1) return 0;
+  for (i=M->cIndex[c0]; i<M->cIndex[c0+1]; i++) {
+    e = M->cEntry[i];
+    for (j=M->cIndex[c1], found=0; j<M->cIndex[c1+1]; j++)
+      if (M->cEntry[j]==e) found=1;
+    if (!(found)) return 0;
+  }
+  for (i=2; i<M->numDenseBlocks; i++) {
+    if (M->denseBlocks[i][c0] != M->denseBlocks[i][c1])
+      return 0;
+  }
+  return 1; 
+}
+
+
+
+/*********************************************************/
+int checkMat(nfs_sparse_mat_t *M)
+/*********************************************************/
+/* Do a sanity check on the matrix: Make sure there are  */
+/* no all zero columns and such.                         */
+/*********************************************************/
+{ s32 c, i, w;
+  int nz, warn=0;
+  s32 *colHash, h, hi;
+
+  if (!(colHash = (s32 *)lxmalloc(2*M->numCols*sizeof(s32),0))) {
+    printf("checkMat() Memory allocation error!\n");
+    printf("** Cannot do sanity check on the matrix!\n");
+    return -1;
+  }
+  for (c=0; c<M->numCols; c++) {
+    w = M->cIndex[c+1] - M->cIndex[c];
+    if (w == 0) {
+      /* Skip QCB & sign entries. */
+      for (i=2, nz=0; i<M->numDenseBlocks; i++) {
+        if (M->denseBlocks[i][c])
+          nz=1;
+      }
+      if (nz==0) {
+        printf("Warning: column %ld is all zero!\n", c);
+        if (numDel < 2048) 
+          delCols[numDel++]=c;
+        warn=1;
+      }
+    }
+    h = 0x00000000;
+    for (i=M->cIndex[c]; i<M->cIndex[c+1]; i++) {
+      hi = NFS_HASH(0, M->cEntry[i], 0x8FFFFFFF);
+      h ^= hi;
+    }
+    for (i=NUM_QCB_BLOCKS; i<M->numDenseBlocks; i++) 
+      h ^= (M->denseBlocks[i][c] & 0xFFFFFFFF) ^ 
+           ((M->denseBlocks[i][c] & 0xFFFFFFFF00000000ULL) >> 32);
+    colHash[2*c] = h;
+    colHash[2*c+1]=c;
+  }
+  qsort(colHash, M->numCols, 2*sizeof(s32), cmp2L1);
+  for (i=0; i<(M->numCols-1); i++) {
+    if (colHash[2*i]==colHash[2*i+2]) {
+      if (colsAreEqual(M, colHash[2*i+1], colHash[2*i+3])) {
+        printf("Bad matrix: column %ld = column %ld!\n", 
+               colHash[2*i+1], colHash[2*i+3]);
+        if (numDel < 2048) 
+          delCols[colHash[2*i+3]]=2*i+1;
+        
+        warn=2;
+      }
+    }
+  }
+
+  if (warn) {
+    printf("checkMat() did not like something about the matrix:\n");
+    printf("This is probably a sign that something has gone horribly wrong\n");
+    printf("in the matrix construction (procrels).\n");
+    if (numDel < 2048) {
+      printf("However, the number of bad columns is only %ld,\n", numDel);
+      printf("so we will delete them and attempt to continue.\n");
+    }
+  }
+  free(colHash);
+  return warn;
+}
+
+/*********************************************************/
+s32 loadMat(nfs_sparse_mat_t *M, char *colName)
+/*********************************************************/
+{ FILE  *fp;
+  s32   i, j, k, fileSize, index, nR, r, *rwt, blockWt;
+  struct stat fileInfo;
+  column_t     C;
+  int    bSize;
+  double dW;
+
+
+  if (stat(colName, &fileInfo)) {
+    printf("loadMat() Could not stat %s!\n", colName);
+    return -1;
+  }
+  fileSize = fileInfo.st_size;
+
+  if (!(fp = fopen(colName, "rb"))) {
+    fprintf(stderr, "loadMat() Unable to open %s for read!\n", colName);
+    return -1;
+  }
+  fread(&M->numCols, sizeof(s32), 1, fp);
+  /* Scan the file once to find out how many dense rows there are. */
+  rwt = (s32 *)lxmalloc(M->numCols*sizeof(s32),1);
+  memset(rwt, 0x00, M->numCols*sizeof(s32));
+
+  nR = 0;
+  for (j=0; j<M->numCols ; j++) {
+    C.numPrimes = 0;
+    readColSF(&C, fp);
+    for (i=0; i<C.numPrimes; i++) {
+      r = C.rows[i];
+      rwt[r] += 1;
+      nR = MAX(nR, r);
+    }
+  }
+  M->numRows = nR + 1 + 64; /* '1' b/c we count from zero. '64' for the additional QCB/sign bits. */
+  M->numDenseBlocks = 1;
+  M->denseBlockIndex[0] = M->numRows - 64;
+  bSize=64;
+
+  /* Condition for a block of rows to be considered dense: */
+  dW=2.0;
+
+  printf("Matrix scanned: it should be %ld x %ld.\n", M->numRows, M->numCols);
+  i=0;
+  /* This could be made a bit slicker, but whatever. */
+  while ((i<nR-bSize) && (M->numDenseBlocks < MAX_DENSE_BLOCKS)) {
+    /* Is the block of rows [i, i+bSize] dense? */
+    for (j=0, blockWt=0; j<bSize; j++) 
+      blockWt += rwt[i+j]; 
+    if (blockWt > dW*M->numCols) {
+      /* Check: Is this particular row fairly dense? */
+      if (rwt[i] > 0.005*M->numCols) {
+        /* Okay - this is a dense block. */
+        M->denseBlockIndex[M->numDenseBlocks] = i;
+        M->numDenseBlocks += 1;
+        /* rwt is reused below, to check which entries are from dense blocks. */
+        for (j=0; j<bSize; j++)
+          rwt[i+j]=1; 
+        i += bSize;
+      } else {
+        rwt[i++]=0;
+      }
+    } else {
+      rwt[i++]=0;
+    }
+  }
+  printf("Found %ld dense blocks. Re-reading matrix...\n", M->numDenseBlocks);
+printf("The dense blocks consist of the following sets of rows:\n");
+for (k=0; k<M->numDenseBlocks; k++) 
+printf("[%ld, %ld]\n", M->denseBlockIndex[k], M->denseBlockIndex[k]+bSize-1);
+
+  rewind(fp);
+  fread(&M->numCols, sizeof(s32), 1, fp);
+
+  /* We could do a little better, by discounting for the QCB and sign entries. */
+  M->maxDataSize = 256 + fileSize/sizeof(s32);
+  M->cEntry = (s32 *)lxmalloc(M->maxDataSize*sizeof(s32),1);
+  M->cIndex = (s32 *)lxmalloc((M->numCols+1)*sizeof(s32),1);
+  for (i=0; i<M->numDenseBlocks; i++) {
+    if (!(M->denseBlocks[i] = (u64 *)lxcalloc((M->numCols+1)*sizeof(u64),0))) {
+      fprintf(stderr, "loadMat() Error allocating %ld bytes for the QCB entries!\n",
+              (M->numCols+1)*sizeof(u64));
+      free(M->cIndex); free(M->cEntry); fclose(fp); return -1;
+    }
+  }
+
+  M->cIndex[0] = 0; index=0;
+  for (j=0; (j<M->numCols) && ((index+50) < M->maxDataSize); j++) {
+    C.numPrimes = 0;
+    readColSF(&C, fp);
+    for (i=0; i<C.numPrimes; i++) {
+      r = C.rows[i];
+      /* Is this entry in a dense block? */
+      if (rwt[r]==1) {
+        /* Find the block (it won't be QCB, though). */
+        for (k=64/bSize; k<M->numDenseBlocks; k++) {
+          if ((r>=M->denseBlockIndex[k]) && (r < bSize+M->denseBlockIndex[k])) {
+            M->denseBlocks[k][j] ^= BIT64(r-M->denseBlockIndex[k]);
+            break;
+          }
+        }
+      } else {
+        M->cEntry[index] = r;
+        index++;
+      }
+    }
+    M->denseBlocks[0][j] = (C.QCB[0]^(((u64)C.QCB[1])<<32))|0x8000000000000000ULL;
+
+    /* We have enough room for one extra index, and we use it */
+    /* to determine size, so this is ok even on the last pass */
+    /* through the loop:                                      */
+    M->cIndex[j+1] = index;
+  }
+  fclose(fp);
+  free(rwt);
+  return M->numRows;
+}    
+
+
+/*********************************************************************/
+rel_list *getRelList(multi_file_t *prelF, int index)
+/*********************************************************************/
+/* Allocate for and read in the specified relation file. Caller is   */
+/* obviously responsible for freeing the memory when done!           */
+/*********************************************************************/
+{ rel_list *RL;
+  FILE     *fp;
+  char      fName[256];
+  struct stat fileInfo;
+
+  RL = (rel_list *)lxmalloc(sizeof(rel_list),1);
+  RL->maxDataSize = 0;
+  sprintf(fName, "%s.%d", prelF->prefix, index);
+  
+  if (stat(fName, &fileInfo)) {
+    printf("Could not stat file %s!\n", fName);
+    free(RL); return NULL;
+  }
+  RL->maxDataSize = 4096 + fileInfo.st_size/sizeof(s32);
+  if ((fp = fopen(fName, "rb"))) {
+    readRawS32(&RL->maxRels, fp);
+    fclose(fp);
+  }
+  RL->maxRels += 5;
+  /* Now allocate for the relations. */
+  if (!(RL->relData = (s32 *)lxmalloc(RL->maxDataSize * sizeof(s32),0))) {
+    fprintf(stderr, "Error allocating %ldMB for reading relation list!\n",
+            RL->maxDataSize * sizeof(s32)/1048576);
+    free(RL); return NULL;
+  }
+  if (!(RL->relIndex = (s32 *)lxmalloc(RL->maxRels * sizeof(s32),0))) {
+    fprintf(stderr, "Error allocating %ldMB for relation pointers!\n", 
+            RL->maxRels * sizeof(s32)/1048576);
+    free(RL->relData); free(RL);
+    return NULL;
+  }
+  RL->numRels = 0;
+  readRelList(RL, fName);
+  return RL;
+}
+
+/*********************************************************************/
+void clearRelList(rel_list *RL)
+/*********************************************************************/
+{
+  if (RL->relData != NULL) 
+    free(RL->relData);
+  if (RL->relIndex != NULL)
+    free(RL->relIndex);
+  RL->relData = RL->relIndex = NULL;
+  RL->maxDataSize = RL->maxRels = 0;
+}
+
+/*********************************************************************/
+int removeEvens(s32 *list, s32 size)
+/*********************************************************************/
+/* Given a list of integers: list[0], ..., list[size-1], reduce it   */
+/* so it contains only those integers that appeared an odd number    */
+/* of times. That is, remove the elements that occur an even number  */
+/* of times.                                                         */
+/* Return value: The number of elements in the reduced list.         */
+/*********************************************************************/
+/* This is a crappy way to do it, but it's good for now.             */
+{ s32 j, k, unique;
+
+  if (size <= 1) return size;
+  qsort(list, size, sizeof(s32), cmpS32s);
+  j=k=unique=0;
+  while (j<size) {
+    k=1;
+    while (((j+k)<size) && (list[j] == list[j+k]))
+      k++;
+    if (k&0x01) {
+      /* It occurrs an odd number of times, so keep it. */
+      list[unique++] = list[j];
+    }
+    j += k;
+  }
+  return unique;
+}
+
+/*************************************************/
+s32 sortRMDups(s32 *L, s32 size)
+/*************************************************/
+/* Sort an array of s32s and remove duplicates. */
+/*************************************************/
+{ s32 i, unique;
+
+  if (size <= 1) return size;
+  qsort(L, size, sizeof(s32), cmpS32s);
+  i=1; unique=0;
+  while (i<size) {
+    if (L[i] == L[unique]) i++;
+    else {
+      ++unique;
+      L[unique] = L[i];
+      i++; 
+    }
+  }
+  return unique+1;
+}
+
+/**********************************************************/
+s32 sortRMDups2(s32 *L, s32 size)
+/**********************************************************/
+/* Sort an array of pairs of s32s and remove duplicates. */
+/**********************************************************/
+{ s32 i, unique;
+
+  if (size <= 1) return size;
+  qsort(L, size, 2*sizeof(s32), cmp2S32s);
+  i=1; unique=0;
+  while (i<size) {
+    if ((L[2*i] == L[2*unique]) && (L[2*i+1]==L[2*unique+1])) 
+      i++;
+    else { 
+      unique++;
+      L[2*unique] = L[2*i];
+      L[2*unique+1] = L[2*i+1];
+      i++;
+    }
+  }
+  return unique+1;
+}
+
+
 
 #define LP_LIST_INC_SIZE 1048576
 /******************************************************************************/
@@ -98,8 +485,7 @@ llist_t *getLPList(multi_file_t *prelF)
 /* (2) Make a second pass through each prel file, grabbing the large primes   */
 /*     occuring in it and looking up the index.                               */
 /******************************************************************************/
-{ s32 i, k, p, r, numRels=0, totalLP=0;
-  u32 j;
+{ s32 i, j, k, p, r, numRels=0, totalLP=0;
   s32 *lR=NULL, *lA=NULL, lRSize, lRMax, lASize, lAMax;
   s32 *buf, bufSize, bufIndex, bufMax;
   s32 *loc, key[2], index;
@@ -112,7 +498,7 @@ llist_t *getLPList(multi_file_t *prelF)
   lRSize = lRMax=0;
   lASize = lAMax=0;
   for (i=0; i<prelF->numFiles; i++) {
-    printf("Loading processed file %" PRId32 "/%d...", i+1, prelF->numFiles);
+    printf("Loading processed file %ld/%d...", i+1, prelF->numFiles);
     fflush(stdout);
     RL = getRelList(prelF, i);
     printf("Done. Processing...\n");
@@ -121,15 +507,15 @@ llist_t *getLPList(multi_file_t *prelF)
       sF = RL->relData[RL->relIndex[j]];
       numLR = GETNUMLRP(sF);
       numLA = GETNUMLAP(sF);
-      lrpi = 4 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2;
-      lapi = 4 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2 + numLR;
+      lrpi = 3 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2;
+      lapi = 3 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2 + numLR;
       totalLP += numLR + numLA;
       for (k=0; k<numLR; k++) {
         p = RL->relData[RL->relIndex[j] + lrpi + k];
         /* So p is a large rational prime in this relation. */
         if (lRSize + 8 > lRMax) {
           lRMax += LP_LIST_INC_SIZE;
-          lR = (s32*)lxrealloc(lR, lRMax*sizeof(s32),0);
+          lR = lxrealloc(lR, lRMax*sizeof(s32),0);
           if (lR == NULL) {
             printf("getLPList() : Memory allocation error for lR!\n");
             exit(-1); 
@@ -143,7 +529,7 @@ llist_t *getLPList(multi_file_t *prelF)
         /* So (p,r) is a large algebraic prime in this relation. */
         if (lASize + 16 > lAMax) {
           lAMax += LP_LIST_INC_SIZE;
-          lA = (s32*)lxrealloc(lA, 2*lAMax*sizeof(s32),0);
+          lA = lxrealloc(lA, 2*lAMax*sizeof(s32),0);
           if (lA == NULL) {
             printf("getLPList() : Memory allocation error for lA!\n");
             exit(-1); 
@@ -163,7 +549,7 @@ llist_t *getLPList(multi_file_t *prelF)
     printf("Done.\nSorting and filtering LA..."); fflush(stdout);
     lASize = sortRMDups2(lA, lASize);
     printf("Done.\n");
-    printf("Found %" PRId32 " distinct large rprimes and %" PRId32 " large aprimes so far.\n",lRSize, lASize); 
+    printf("Found %ld distinct large rprimes and %ld large aprimes so far.\n",lRSize, lASize); 
   }
 
   bufMax = IO_BUFFER_SIZE;
@@ -174,7 +560,7 @@ llist_t *getLPList(multi_file_t *prelF)
   bufSize=0;
 
 
-  printf("There are %" PRId32 " large primes versus %" PRId32 " relations.\n", 
+  printf("There are %ld large primes versus %ld relations.\n", 
           lRSize+lASize, numRels);
   initialRelations = numRels;
 
@@ -249,7 +635,7 @@ llist_t *getLPList(multi_file_t *prelF)
 
 
   for (i=0; i<prelF->numFiles; i++) {
-    printf("Loading processed file %" PRId32 "/%d...", i+1, prelF->numFiles);
+    printf("Loading processed file %ld/%d...", i+1, prelF->numFiles);
     fflush(stdout);
     RL = getRelList(prelF, i);
     printf("Done. Processing...\n");
@@ -262,15 +648,15 @@ llist_t *getLPList(multi_file_t *prelF)
       sF = RL->relData[RL->relIndex[j]];
       numLR = GETNUMLRP(sF);
       numLA = GETNUMLAP(sF);
-      lrpi = 4 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2;
-      lapi = 4 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2 + numLR;
+      lrpi = 3 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2;
+      lapi = 3 + 2*(GETNUMRFB(sF) + GETNUMAFB(sF) + GETNUMSPB(sF)) + 2 + numLR;
       buf[bufSize++]=numLR+numLA;
       for (k=0; k<numLR; k++) {
         p = RL->relData[RL->relIndex[j] + lrpi + k];
         /* So p is a large rational prime in this relation: get it's index. */
-        loc = (s32*)bsearch(&p, lR, lRSize, sizeof(s32), cmpS32s);
+        loc = bsearch(&p, lR, lRSize, sizeof(s32), cmpS32s);
         if (loc==NULL) {
-          printf("Warning: Could not find large rational prime %" PRId32 " in lR!\n", p);
+          printf("Warning: Could not find large rational prime %ld in lR!\n", p);
           index = BAD_LP_INDEX; /* See the note at top of file. */
         } else {
           index = loc-lR;
@@ -282,9 +668,9 @@ llist_t *getLPList(multi_file_t *prelF)
         r = RL->relData[RL->relIndex[j] + lapi + 2*k + 1];
         /* So (p,r) is a large algebraic prime in this relation. */
         key[0]=p; key[1]=r;
-        loc = (s32*)bsearch(key, lA, lASize, 2*sizeof(s32), cmp2S32s);
+        loc = bsearch(key, lA, lASize, 2*sizeof(s32), cmp2S32s);
         if (loc==NULL) {
-          printf("Warning: Could not find large alg prime (%" PRId32 ",%" PRId32 ") in lR!\n",p,r);
+          printf("Warning: Could not find large alg prime (%ld,%ld) in lR!\n",p,r);
           index = BAD_LP_INDEX;
         } else {
           index = lRSize + (loc - lA)/2;
@@ -330,9 +716,9 @@ llist_t *getLPList(multi_file_t *prelF)
   return P;
 }
 
-/***************************************************************************************/
-s32 doRowOps3(llist_t **P, llist_t *R, multi_file_t *prelF, s32 maxRelsInFF, s32 minFull)
-/***************************************************************************************/
+/******************************************************************************/
+s32 doRowOps3(llist_t **P, llist_t *R, multi_file_t *prelF, int maxRelsInFF)
+/******************************************************************************/
 { s32 numFull, numLP[10], j;
   llist_t *PL;
   s32 numLargeP;
@@ -340,10 +726,9 @@ s32 doRowOps3(llist_t **P, llist_t *R, multi_file_t *prelF, s32 maxRelsInFF, s32
   PL = getLPList(prelF);
   numLargeP = totalLargePrimes;
   printf("----------------------------\n");
-  printf("There are %" PRId32 " large primes versus %" PRId32 " relations.\n", 
+  printf("There are %ld large primes versus %ld relations.\n", 
           numLargeP, initialRelations);
-  msgLog(NULL, "largePrimes: %" PRId32 " , relations: %" PRId32,
-         numLargeP, initialRelations);
+  msgLog(NULL, "largePrimes: %ld , relations: %ld", numLargeP, initialRelations);
   printf("----------------------------\n");
 
   *P = PL;
@@ -355,16 +740,13 @@ s32 doRowOps3(llist_t **P, llist_t *R, multi_file_t *prelF, s32 maxRelsInFF, s32
   printf("------------------------------\n");
   j=0;
   do {
-    printf("                %" PRId32 " | %" PRId32 "\n", j, numLP[j]);
+    printf("                %ld | %ld\n", j, numLP[j]);
     j++;
   } while ((j<10) && (numLP[j]>0));
   printf("------------------------------\n");
 
-#ifdef GGNFS_TPIE
-  numFull = combParts_tpie(R, PL, maxRelsInFF, minFF, minFull);
-#else
-  numFull = combParts(R, PL, maxRelsInFF, minFF, minFull);
-#endif
+
+  numFull = combParts(R, PL, maxRelsInFF, minFF);
   return numFull;
 }
 
@@ -372,7 +754,7 @@ s32 doRowOps3(llist_t **P, llist_t *R, multi_file_t *prelF, s32 maxRelsInFF, s32
 
 /*********************************************************************/
 s32 getCols(char *colName, multi_file_t *prelF, multi_file_t *lpF, nfs_fb_t *FB,
-             s32 minFull, s32 maxRelsInFF)
+             s32 minFull, int maxRelsInFF)
 /*********************************************************************/
 { s32         i, j, k, l, R0, R1;
   s32         numFulls, rIndex, numFF, tPP;
@@ -390,9 +772,8 @@ s32 getCols(char *colName, multi_file_t *prelF, multi_file_t *lpF, nfs_fb_t *FB,
   mpz_init(tmp);
   tPP = approxPi_x(FB->maxP_r) + approxPi_x(FB->maxP_a);
   tPP = tPP - FB->rfb_size - FB->afb_size;
-  memset(&Rl, 0, sizeof(Rl));
-  printf("Max # of large primes is approximately %" PRId32 ".\n", tPP);
-  numFulls = doRowOps3(&P, &Rl, prelF, maxRelsInFF, minFull);
+  printf("Max # of large primes is approximately %ld.\n", tPP);
+  numFulls = doRowOps3(&P, &Rl, prelF, maxRelsInFF);
 
   if (numFulls < minFull) {
     ll_clear(P); ll_clear(&Rl); free(P);
@@ -483,7 +864,7 @@ s32 getCols(char *colName, multi_file_t *prelF, multi_file_t *lpF, nfs_fb_t *FB,
   ll_clear(P); free(P);
 
 
-  printf("After re-scanning files and building column indicies, numFF=%" PRId32 ".\n", numFF);
+  printf("After re-scanning files and building column indicies, numFF=%ld.\n", numFF);
   bufSize = bufIndex = 0;
   bufSize2 = bufIndex2 = 0;
   /*******************************************************************************/
@@ -495,14 +876,14 @@ s32 getCols(char *colName, multi_file_t *prelF, multi_file_t *lpF, nfs_fb_t *FB,
   aOffset = FB->rfb_size;
   spOffset = aOffset + FB->afb_size;
 
-  printf("Creating %" PRId32 " matrix columns...\n", numFF);
+  printf("Creating %ld matrix columns...\n", numFF);
   strcpy(fName, TMP_FILE);
   R0=R1=0;
   for (i=0; i<prelF->numFiles; i++) {
-    sprintf(prelName, "%s.%" PRId32, prelF->prefix, i);
+    sprintf(prelName, "%s.%ld", prelF->prefix, i);
     RL = getRelList(prelF, i);
     R1 = R0 + RL->numRels;
-    printf("Re-read %" PRId32 " relations from %s :  [%" PRId32 ", %" PRId32 ").\n", RL->numRels, prelName, R0, R1);
+    printf("Re-read %ld relations from %s :  [%ld, %ld).\n", RL->numRels, prelName, R0, R1);
     /* Now, we have in RAM the relations numbered [R0, R1). */
     if (!(fp = fopen(colName, "rb"))) {
       fprintf(stderr, "getCols() Error opening %s for read!\n", colName);
@@ -652,11 +1033,11 @@ s32 getCols(char *colName, multi_file_t *prelF, multi_file_t *lpF, nfs_fb_t *FB,
     }
 
     if (C.numRels > 0) {
-      printf("Error: relation-set %" PRId32 " still has %" PRId32 " unconverted relations!\n",
+      printf("Error: relation-set %ld still has %ld unconverted relations!\n",
               j,C.numRels);
       printf("They are: ");
       for (i=0; i<C.numRels; i++) 
-        printf("%" PRId32 " ", C.Rels[i]);
+        printf("%ld ", C.Rels[i]);
       printf("\n");
       exit(-1);
     }
@@ -690,7 +1071,7 @@ int count_prelF(multi_file_t *prelF)
 { int    i, cont;
   struct stat fileInfo;
   char   fName[512];
-  off_t   maxSize=0;
+  s32   maxSize=0;
 
   i=0;
   do {
@@ -708,20 +1089,128 @@ int count_prelF(multi_file_t *prelF)
   return 0;
 }
 
+
+/******************************************************/
+int allocateRL(multi_file_t *prelF, rel_list *RL)
+/******************************************************/
+/* Allocate 'RL' so it can hold the largest of the    */
+/* processed relation files.                          */
+/******************************************************/
+{ s32 maxSize;
+  char prelName[512];
+  int  i;
+  struct stat fileInfo;
+
+  maxSize = 0;
+  for (i=0; i<prelF->numFiles; i++) {
+    sprintf(prelName, "%s.%d", prelF->prefix, i);
+    if (stat(prelName, &fileInfo)==0) 
+      maxSize = MAX(maxSize, fileInfo.st_size);
+  }
+
+  RL->numRels = 0;
+  RL->maxDataSize = 1000 + maxSize/sizeof(s32);
+  if (!(RL->relData = (s32 *)lxmalloc(RL->maxDataSize * sizeof(s32),0))) {
+    fprintf(stderr, "Error allocating %ldMB for processed relation files!\n",
+            RL->maxDataSize * sizeof(s32)/1048576);
+    fprintf(stderr, "Try decreasing DEFAULT_MAX_FILESIZE and re-running.\n");
+    exit(-1);
+  }
+  /* Again: it's a safe bet that any relation needs at least 20 s32s, so: */
+  RL->maxRels = (u32)RL->maxDataSize/20;
+  if (!(RL->relIndex = (s32 *)lxmalloc(RL->maxRels * sizeof(s32),0))) {
+    fprintf(stderr, "Error allocating %ldMB for relation pointers!\n",
+            RL->maxRels * sizeof(s32)/1048756);
+    free(RL->relData);
+    exit(-1);
+  }
+  return 0;
+}
+
+/******************************************************/
+void clearRL(rel_list *RL)
+{
+  if (RL->relData) free(RL->relData);
+  if (RL->relIndex) free(RL->relIndex);
+  RL->maxDataSize = RL->numRels = 0;
+  RL->relData = RL->relIndex = NULL;
+}
+
+/********************************************/
+int cmp2S32s(const void *a, const void *b)
+/********************************************/
+{ s32 *A = (s32 *)a, *B = (s32 *)b;
+
+  if (A[0] < B[0]) return -1;
+  if (A[0] > B[0]) return 1;
+  if (A[1] < B[1]) return -1;
+  if (A[1] > B[1]) return 1;
+  return 0;
+}
+
+/****************************************************/
+int buildSparseMat(char *colName, double wtFactor)
+/****************************************************/
+{ llist_t C;
+  nfs_sparse_mat_t M;
+  long minExtraCols;
+
+  printf("Loading matrix into RAM...\n");
+  loadMat(&M, colName);
+  printf("Matrix loaded: it is %ld x %ld.\n", M.numRows, M.numCols);
+  if (M.numCols < (M.numRows + 64)) {
+    printf("More columns needed (current = %ld, min = %ld)\n",
+           M.numCols, M.numRows+64);
+    free(M.cEntry); free(M.cIndex);
+    return 0;
+  }
+  if (checkMat(&M)) {
+    printf("checkMat() returned some error! Terminating...\n");
+    exit(-1);
+  }
+  /**************************************************************/
+  /* This is to map new columns onto old ones, so we can delete */
+  /* some, and still be able to recover dependencies from the   */
+  /* original matrix.                                           */
+  /**************************************************************/
+  cm_init(&C, &M);
+
+  /* First, delete any columns which we are required to remove (probably
+     because they were somehow bad.
+  */
+  removeCols(&M, &C, delCols, numDel);
+
+  minExtraCols = 64 + 0.005*M.numRows;
+  pruneMatrix(&M, minExtraCols, wtFactor, &C);
+  /* Sanity check: */
+  if (M.numCols != C.numFields) {
+    fprintf(stderr, "Error: M.numCols = %ld != %ld = C.numFields.\n",
+            M.numCols, C.numFields);
+    exit(-1);
+  } else {
+    printf("Sanity check: M.numCols = %ld = C.numFields. passed.\n",
+            M.numCols);
+  }
+  writeSparseMat("spmat", &M);
+  ll_write("sp-index", &C);
+  return 0;
+}
+
+
 /****************************************************/
 int main(int argC, char *args[])
 /****************************************************/
 { char       fbName[64], prelName[40], newRelName[64], depName[64], colName[64];
   char       str[128], line[128];
   int        i, qcbSize = DEFAULT_QCB_SIZE, seed=DEFAULT_SEED, retVal=0;
-  u32        maxRelsInFF=MAX_RELS_IN_FF;
-  double     startTime, stopTime;
+  int        maxRelsInFF=MAX_RELS_IN_FF;
+  double     startTime, stopTime, wtFactor=DEFAULT_WT_FACTOR;
   s32        totalRels, relsInFile;
   nfs_fb_t   FB;
   multi_file_t prelF, lpF;
   FILE      *fp;
 
-  lxmalloc(4000000,0);
+lxmalloc(4000000,0);
   prelF.numFiles = DEFAULT_NUM_FILES;
   lpF.numFiles = 0;
   prelF.prefix[0] = lpF.prefix[0]=0;
@@ -733,14 +1222,10 @@ int main(int argC, char *args[])
   line[0]=0;
   printf(START_MSG, GGNFS_VERSION);
   minFF=0;
-
   for (i=1; i<argC; i++) {
     if (strcmp(args[i], "-fb")==0) {
       if ((++i) < argC) 
         strncpy(fbName, args[i], 64);
-    } else if (strcmp(args[i], "-cols")==0) {
-      if ((++i) < argC) 
-        strncpy(colName, args[i], 64);
     } else if (strcmp(args[i], "-prel")==0) {
       if ((++i) < argC) 
         strncpy(prelF.prefix, args[i], 32);
@@ -751,8 +1236,9 @@ int main(int argC, char *args[])
       if ((++i) < argC)
         minFF = atoi(args[i]);
     } else if (strcmp(args[i], "-seed")==0) {
-      if ((++i) < argC)
+      if ((++i) < argC) {
         seed = atoi(args[i]);
+      }
     } else if (strcmp(args[i], "-v")==0) {
       verbose++;
     } else if (strcmp(args[i], "-maxrelsinff")==0) {
@@ -797,18 +1283,20 @@ int main(int argC, char *args[])
     totalRels += relsInFile;
   }
 
-  finalFF = getCols(colName, &prelF, &lpF, &FB, minFF, maxRelsInFF);
-  msgLog("", "Heap stats for matbuild run.");
+  finalFF = getCols("cols", &prelF, &lpF, &FB, minFF, maxRelsInFF);
+  msgLog("", "Heap stats for matbuild run, after cycle-building");
   logHeapStats();
-
   if (finalFF > 0)
-    msgLog("", "rels:%" PRId32 ", initialFF:%" PRId32 ", finalFF:%" PRId32, 
+    msgLog("", "rels:%ld, initialFF:%ld, finalFF:%ld", 
            initialRelations, initialFF, finalFF);
   if (finalFF < minFF) {
-    printf("More columns needed (current = %" PRId32 ", min = %" PRId32 ")\n",
+    printf("More columns needed (current = %ld, min = %ld)\n",
            finalFF, minFF);
     exit(0);
   }
+
+  /* Ok - build and prune the sparse matrix. */
+  buildSparseMat("cols", wtFactor);
 
   /* Write some header information that will eventually be needed
      in the `deps' file.
@@ -816,9 +1304,9 @@ int main(int argC, char *args[])
   if (!(fp = fopen("depinf", "wb"))) {
     fprintf(stderr, "Error opening %s for write!\n", "depinf");
   } else {
-    sprintf(str, "NUMCOLS: %8.8" PRIx32, finalFF); writeBinField(fp, str);
+    sprintf(str, "NUMCOLS: %8.8lx", finalFF); writeBinField(fp, str);
     sprintf(str, "COLNAME: %s.index", colName); writeBinField(fp, str);
-    sprintf(str, "MAXRELS: %8.8" PRIx32, totalRels); writeBinField(fp, str);
+    sprintf(str, "MAXRELS: %8.8lx", totalRels); writeBinField(fp, str);
     sprintf(str, "RELPREFIX: %s", prelF.prefix); writeBinField(fp, str);
     sprintf(str, "RELFILES: %x", prelF.numFiles); writeBinField(fp, str);
     sprintf(str, "LPFPREFIX: %s", lpF.prefix); writeBinField(fp, str);
@@ -826,11 +1314,19 @@ int main(int argC, char *args[])
     sprintf(str, "END_HEADER"); writeBinField(fp, str);
     fclose(fp);
   }
-  printf("`depinf' written. You can now run matprune.\n");
-  msgLog("", "depinf file written. Run matprune.");
+  printf("`depinf' written. You can now run matsolve.\n");
+  msgLog("", "depinf file written. Run matsolve.");
 
   stopTime = sTime();
   printf("Total elapsed time: %1.2lf seconds.\n", stopTime-startTime);
+  msgLog("", "Heap stats for matbuild run:");
+  logHeapStats();
 
   return retVal;
-}
+}  
+
+
+
+
+
+

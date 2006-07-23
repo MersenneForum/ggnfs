@@ -18,6 +18,9 @@
 #include <math.h>
 #include "if.h"
 
+extern void *xmalloc(size_t size);
+
+
 static double **roots_pol_deriv, *roots_derivroots;
 double *roots_optima;
 static int roots_noptima, roots_deg;

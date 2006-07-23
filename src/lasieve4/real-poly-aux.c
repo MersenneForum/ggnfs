@@ -14,11 +14,14 @@
 */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <limits.h>
 #include <sys/types.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#else
+#include "asm/lasieve-asm.h"
 #include "lasieve.h"
+#endif
 
 static double *aux;
 static size_t aux_alloc = 0;
@@ -26,13 +29,13 @@ static size_t aux_alloc = 0;
 /* Action of GL(2,Z) on homogeneous polys. */
 
 /************************************************************/
-void tpol(double *rop, double *op, u32_t deg, i32_t x0, i32_t x1,
+void tpol(double *rop, double *op, i32_t deg, i32_t x0, i32_t x1,
           i32_t y0, i32_t y1)
 /************************************************************/
 {
   i32_t d;
 
-  if (deg == UINT_MAX)
+  if (deg == U32_MAX)
     complain("Degree too large\n");
   if (deg == 0) {
     rop[0] = op[0];
@@ -83,13 +86,13 @@ double rpol_eval(double *p, i32_t d, double x, double y)
 }
 
 /************************************************************/
-double rpol_lb(double *pol, u32_t poldeg, double a, double b)
+double rpol_lb(double *pol, i32_t poldeg, double a, double b)
 /************************************************************/
 {
-  u32_t i;
+  i32_t i;
   double m1, m2, s1, s2;
 
-  if (poldeg == UINT_MAX)
+  if (poldeg == U32_MAX)
     complain("Degree too large\n");
   if (aux_alloc < poldeg + 1) {
     if (aux_alloc > 0)

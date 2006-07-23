@@ -13,12 +13,13 @@
   02111-1307, USA.
 */
 
-#include <assert.h>
 #include <math.h>
-#include <limits.h>
-
+#ifdef __ppc__
+#include "ppc32/siever-config.h"
+#else
+#include "asm/lasieve-asm.h"
 #include "lasieve.h"
-
+#endif
 i32_t n_iter = 0;
 
 /**************************************************************/
@@ -41,8 +42,7 @@ void reduce2(i32_t * a0_ptr, i32_t * b0_ptr, i32_t * a1_ptr, i32_t * b1_ptr,
     if (a0sq < a1sq) {
       i32_t k;
 
-	  assert(((s / a0sq) >= INT_MIN) && ((s / a0sq) <= INT_MAX));
-      k = (i32_t)rint(s / a0sq);
+      k = rint(s / a0sq);
       if (k == 0)
         break;
       a1 -= k * a0;
@@ -52,8 +52,7 @@ void reduce2(i32_t * a0_ptr, i32_t * b0_ptr, i32_t * a1_ptr, i32_t * b1_ptr,
     } else {
       i32_t k;
 
-	  assert(((s / a1sq) >= INT_MIN) && ((s / a1sq) <= INT_MAX));
-      k = (i32_t)rint(s / a1sq);
+      k = rint(s / a1sq);
       if (k == 0)
         break;
       a0 -= k * a1;

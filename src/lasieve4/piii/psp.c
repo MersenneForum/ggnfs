@@ -20,20 +20,22 @@
 #include <limits.h>
 #include <math.h>
 #include <gmp.h>
-#include "siever-config.h"
+#include "lasieve-asm.h"
 
-extern uint32_t montgomery_inv_n;
-extern uint32_t *montgomery_modulo_n;
-extern uint32_t montgomery_modulo_R2[NMAX_ULONGS];
-extern uint32_t montgomery_ulongs;
+typedef unsigned long long ull;
 
-extern void (*asm_mulmod) (uint32_t *, uint32_t *, uint32_t *);
-extern void (*asm_squmod) (uint32_t *, uint32_t *);
-extern void (*asm_add2) (uint32_t *, uint32_t *);
-extern void (*asm_diff) (uint32_t *, uint32_t *, uint32_t *);
+extern ulong montgomery_inv_n;
+extern ulong *montgomery_modulo_n;
+extern ulong montgomery_modulo_R2[NMAX_ULONGS];
+extern ulong montgomery_ulongs;
+
+extern void (*asm_mulmod) (ulong *, ulong *, ulong *);
+extern void (*asm_squmod) (ulong *, ulong *);
+extern void (*asm_add2) (ulong *, ulong *);
+extern void (*asm_diff) (ulong *, ulong *, ulong *);
 
 #if 0
-int asm_cmp64(uint32_t * a, uint32_t * b)
+int asm_cmp64(ulong * a, ulong * b)
 {
   if (a[0] != b[0])
     return 1;
@@ -46,8 +48,8 @@ int asm_cmp64(uint32_t * a, uint32_t * b)
 /*******************************************************/
 int psp64()
 /*******************************************************/
-{ uint32_t x[2], ex[2], one[2], s;
-  long e, i, b=0, v;
+{ ulong x[2], ex[2], one[2], s, y[2];
+  long e, i, b, v;
 
   if (!(montgomery_modulo_n[0] & 1))
     return 0;
@@ -116,7 +118,7 @@ int psp64()
 }
 
 #if 0
-int asm_cmp(uint32_t * a, uint32_t * b)
+int asm_cmp(ulong * a, ulong * b)
 {
   long i;
 
@@ -130,7 +132,7 @@ int asm_cmp(uint32_t * a, uint32_t * b)
 /*******************************************************/
 int psp(mpz_t n)
 /*******************************************************/
-{ uint32_t x[NMAX_ULONGS], ex[NMAX_ULONGS], one[NMAX_ULONGS], s;
+{ ulong x[NMAX_ULONGS], ex[NMAX_ULONGS], one[NMAX_ULONGS], s;
   long e, i, b, v;
 
   if (!set_montgomery_multiplication(n))
@@ -141,23 +143,23 @@ int psp(mpz_t n)
   if (!(montgomery_modulo_n[0] & 1))
     return 0;                   /* number is even */
   ex[0] = montgomery_modulo_n[0] - 1;
-  for (i = 1; i < (long)montgomery_ulongs; i++)
+  for (i = 1; i < montgomery_ulongs; i++)
     ex[i] = montgomery_modulo_n[i];
-  for (i = 0; i < (long)montgomery_ulongs; i++)
+  for (i = 0; i < montgomery_ulongs; i++)
     if (ex[i])
       break;
-  if (i >= (long)montgomery_ulongs)
+  if (i >= montgomery_ulongs)
     return 0;                   /* number is 1 */
 
   e = 0;
   while (!(ex[0] & 1)) {
-    for (i = 0; i < (long)montgomery_ulongs - 1; i++)
+    for (i = 0; i < montgomery_ulongs - 1; i++)
       ex[i] = (ex[i] >> 1) | (ex[i + 1] << 31);
     ex[montgomery_ulongs - 1] >>= 1;
     e++;
   }
   one[0] = 1;
-  for (i = 1; i < (long)montgomery_ulongs; i++)
+  for (i = 1; i < montgomery_ulongs; i++)
     one[i] = 0;
   asm_mulmod(one, montgomery_modulo_R2, one);
 
@@ -173,7 +175,7 @@ int psp(mpz_t n)
     v <<= 1;
   }
 
-  for (i = 0; i < (long)montgomery_ulongs; i++)
+  for (i = 0; i < montgomery_ulongs; i++)
     x[i] = 0;
   s = 1;
   for (i = b - 1; i >= 0; i--) {

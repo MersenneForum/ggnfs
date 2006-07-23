@@ -13,7 +13,7 @@
 
 #include <sys/types.h>
 #include <limits.h>
-#include "siever-config.h"
+#include "lasieve-asm.h"
 #include "../lasieve.h"
 
 #define L1_SIZE (1<<L1_BITS)
@@ -27,7 +27,7 @@ u32_t *lasched(u32_t *ri, u32_t *ij_ptr, u32_t *ij_ptr_ub, u32_t n1_j,
                u32_t **sched_ptr, u32_t fbi_offs, u32_t ot)
 /*******************************************************/
 { u32_t ij, ij_ub;
-  u32_t ot_mask=0, ot_tester=0;
+  u32_t ot_mask, ot_tester;
 
   ij_ub = n1_j << i_bits;
 
