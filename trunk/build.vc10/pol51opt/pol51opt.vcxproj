@@ -209,7 +209,16 @@
     <ClCompile Include="..\..\src\pol5\zeit.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
+    <ClInclude Include="..\..\include\version.h" />
+    <ClInclude Include="..\..\src\if.h" />
+    <ClInclude Include="..\..\src\lasieve4\asm\siever-config.h" />
+    <ClInclude Include="..\..\src\lasieve4\lasieve.h" />
+    <ClInclude Include="..\..\src\pol5\fnmatch.h" />
     <ClInclude Include="..\..\src\pol5\if.h" />
+    <ClInclude Include="..\getopt.h" />
+    <ClInclude Include="..\unistd.h" />
   </ItemGroup>
   <ItemGroup>
     <YASM Include="..\..\src\pol5\asm_rs.asm">

@@ -211,12 +211,17 @@
     <ClCompile Include="..\..\src\experimental\pol5\stage1\struct.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
+    <ClInclude Include="..\..\include\version.h" />
+    <ClInclude Include="..\..\src\if.h" />
     <ClInclude Include="..\getopt.h" />
     <ClInclude Include="..\..\src\pol5\if.h" />
     <ClInclude Include="..\..\src\experimental\pol5\include\poly_stage1.h" />
     <ClInclude Include="..\..\src\experimental\pol5\include\profile.h" />
     <ClInclude Include="..\..\src\experimental\pol5\stage1\stage1_impl.h" />
     <ClInclude Include="..\..\src\experimental\pol5\stage1\stage1_inline.h" />
+    <ClInclude Include="..\unistd.h" />
   </ItemGroup>
   <ItemGroup>
     <YASM Include="..\..\src\experimental\pol5\stage1\asm_hash5.asm">

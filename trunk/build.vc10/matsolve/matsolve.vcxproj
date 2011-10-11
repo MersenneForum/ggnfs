@@ -221,6 +221,15 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
+    <ClInclude Include="..\..\include\prand.h" />
+    <ClInclude Include="..\..\include\version.h" />
+    <ClInclude Include="..\..\src\if.h" />
+    <ClInclude Include="..\getopt.h" />
+    <ClInclude Include="..\unistd.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\vsyasm.targets" />
