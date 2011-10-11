@@ -221,8 +221,26 @@
     <ClCompile Include="..\..\src\rellist.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\ammintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\emmintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\immintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\mm3dnow.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\mmintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\nmmintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\pmmintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\smmintrin.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\tmmintrin.h" />
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
+    <ClInclude Include="..\..\include\prand.h" />
+    <ClInclude Include="..\..\include\version.h" />
+    <ClInclude Include="..\..\src\experimental\app_config.h" />
+    <ClInclude Include="..\..\src\experimental\llist_tpie.h" />
+    <ClInclude Include="..\..\src\if.h" />
     <ClInclude Include="..\..\src\intutils.h" />
     <ClInclude Include="..\..\src\rellist.h" />
+    <ClInclude Include="..\getopt.h" />
+    <ClInclude Include="..\unistd.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ggnfslib\ggnfslib.vcxproj">

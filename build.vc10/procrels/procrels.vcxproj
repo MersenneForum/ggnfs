@@ -209,6 +209,11 @@
     <ClCompile Include="..\..\src\rellist.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
+    <ClInclude Include="..\..\include\prand.h" />
+    <ClInclude Include="..\..\include\version.h" />
+    <ClInclude Include="..\..\src\if.h" />
     <ClInclude Include="..\..\src\intutils.h" />
     <ClInclude Include="..\..\src\rellist.h" />
   </ItemGroup>

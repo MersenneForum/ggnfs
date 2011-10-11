@@ -213,6 +213,8 @@
     <ClCompile Include="..\..\src\misc.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
     <ClInclude Include="..\..\src\intutils.h" />
     <ClInclude Include="..\..\src\rellist.h" />
   </ItemGroup>

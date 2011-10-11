@@ -303,10 +303,21 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\include\ggnfs.h" />
+    <ClInclude Include="..\..\include\version.h" />
+    <ClInclude Include="..\..\src\if.h" />
+    <ClInclude Include="..\..\src\lasieve4\asm\32bit.h" />
+    <ClInclude Include="..\..\src\lasieve4\asm\siever-config.h" />
     <ClInclude Include="..\..\src\lasieve4\generic\32bit.h" />
     <ClInclude Include="..\..\if.h" />
     <ClInclude Include="..\..\src\lasieve4\lasieve.h" />
     <ClInclude Include="..\..\src\lasieve4\piii\siever-config.h" />
+    <ClInclude Include="..\..\src\lasieve4\ppc32\32bit.h" />
+    <ClInclude Include="..\..\src\lasieve4\ppc32\siever-config.h" />
+    <ClInclude Include="..\fnmatch.h" />
+    <ClInclude Include="..\getopt.h" />
+    <ClInclude Include="..\unistd.h" />
   </ItemGroup>
   <ItemGroup>
     <YASM Include="..\..\src\lasieve4\piii\asm_mul128.asm">
