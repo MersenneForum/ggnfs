@@ -1349,8 +1349,14 @@ sub setup {
       
   # The below is approx. 0.2*(pi(LPBA) + pi(LPBR)).  
   # It's so small because, for small LPBA, it really overestimates.
-  $MINRELS=int(0.2*1.442695*( (2**$LPBA)/$LPBA + (2**$LPBR)/$LPBR));
-
+  $MINRELS=int(0.35*1.442695*( (2**$LPBA)/$LPBA + (2**$LPBR)/$LPBR));
+  if($LPBA==$LPBR) {		# some simple heuristics, fudge=0.35 above
+    $MINRELS= 4000000 if($LPBA==26); # fudge = 0.54
+    $MINRELS= 9000000 if($LPBA==27); # fudge = 0.63
+    $MINRELS=19000000 if($LPBA==28); # fudge = 0.69
+    $MINRELS=46000000 if($LPBA==29); # fudge = 0.84 
+    $MINRELS=92000000 if($LPBA==30); # fudge = 0.89
+  }
   ############################################
   # Setup the parameters for sieving ranges. #
   ############################################
