@@ -191,9 +191,9 @@
         pshufd  xmm8, xmm8, 0x4e
         mov     esi, ebx
         pmuludq xmm12, xmm2
-        add     rsp, 32        
+        sub     rsp, 32        
         call    asm_modinv32b
-        sub     rsp, 32
+        add     rsp, 32
 %if %1 * (%1 - 3) == 0  
         sub     r15d, eax
 %endif  
@@ -258,17 +258,17 @@
         psrldq  xmm7, 8
         movdqa  xmm2, xmm11
         pmuludq xmm11, xmm8
-        add     rsp, 32        
+        sub     rsp, 32        
         call    get_recurrence_info
-        sub     rsp, 32
+        add     rsp, 32
         mov     esi, ebx
         lea     rdi, [r13+8]
         movd    edx, xmm7
         pmuludq xmm11, xmm2
         movdqa  xmm0, xmm8
-        add     rsp, 32
-        call    get_recurrence_info
         sub     rsp, 32
+        call    get_recurrence_info
+        add     rsp, 32
         cmp     r14, r12
         pslld   xmm2, 1
         pshufd  xmm12, xmm1, 0x98
