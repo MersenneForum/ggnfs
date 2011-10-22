@@ -278,9 +278,9 @@
 .16:    xor     rax, rax
         emms    
         EXIT_PROC reg_save_list
-.17:    add     rsp, 32
+.17:    sub     rsp, 32
         call    abort
-        sub     rsp, 32
+        add     rsp, 32
         END_PROC reg_save_list
 
         end

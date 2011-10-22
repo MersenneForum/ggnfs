@@ -75,9 +75,9 @@
         mov     eax, [rel modulo32]
         sub     eax, r8d
         ret
-.6:     add     rsp, 32
+.6:     sub     rsp, 32
         call    abort
-        sub     rsp, 32
+        add     rsp, 32
  
         end
            

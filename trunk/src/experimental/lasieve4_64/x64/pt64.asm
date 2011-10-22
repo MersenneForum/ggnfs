@@ -60,9 +60,9 @@ modsq64:mov     rax, r11
         mov     rcx, rax        
         mov     r11, rsi
         jmp     .5
-.4:     add     rsp,32
+.4:     sub     rsp,32
         call    modsq64
-        sub     rsp, 32
+        add     rsp, 32
         test    r9, rcx
         jz      .6
 .5:     xor     rax, rax
@@ -81,9 +81,9 @@ modsq64:mov     rax, r11
         je      .9
         dec     r10
         jz      .8
-        add     rsp, 32
-        call    modsq64
         sub     rsp, 32
+        call    modsq64
+        add     rsp, 32
         jmp     .7
         
         align   8
