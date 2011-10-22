@@ -77,6 +77,10 @@ label(i):
 %define j_per_strip_minus1  1
         
         FRAME_PROC slinie1, 0, reg_save_list
+        mov     rdi, rcx
+        mov     rsi, rdx
+        mov     rdx,  r8
+
         cmp     rsi, rdi
         jbe     .3
         sub     rsi, 8

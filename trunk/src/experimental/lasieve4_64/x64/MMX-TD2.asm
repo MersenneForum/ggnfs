@@ -14,7 +14,7 @@
         mov     rdi, rcx
         mov     esi, edx
         mov     rdx, r8
-        mov     ecx, r9d
+        mov     rcx, r9
 
         mov     r8d, esi
         movdqa  xmm2, [rdx]

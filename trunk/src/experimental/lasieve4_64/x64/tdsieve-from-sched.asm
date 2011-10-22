@@ -15,7 +15,7 @@
         mov     rsi, rdx
         mov     rdx, r8
         mov     rcx, r9
-        mov      r8, qword [rsp+stack_use+40]
+        mov     r8, [rsp+stack_use+40]
 
         mov     r9, [rdi]
         lea     rsi, [rsi-12]

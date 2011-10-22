@@ -15,7 +15,7 @@
         mov     rsi, rdx
         mov     rdx,  r8
         mov     rcx,  r9
-        mov     r8d, dword [rsp+stack_use+40]
+        mov     r8d, [rsp+stack_use+40]
         
         shl     r8d, 16
         cmp     rdx, rsi
