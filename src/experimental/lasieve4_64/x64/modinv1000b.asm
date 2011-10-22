@@ -80,7 +80,9 @@
         sub     eax, r8d
         ret     
 .6:     je      .8
-.7:     call    abort
+.7:     add     rsp, 32
+        call    abort
+        sub     rsp, 32
 .8:     xor     eax, eax
         ret     
 

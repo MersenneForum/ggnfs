@@ -23,7 +23,7 @@
         mov     rdx,  r8
         mov     ecx, r9d
         mov      r8, [rsp+stack_use+40]
-        mov     r9d, dword [rsp+stack_use+48]
+        mov     r9d, [rsp+stack_use+48]
 
         shl     rcx, n_i_bits
         shr     r9, 16

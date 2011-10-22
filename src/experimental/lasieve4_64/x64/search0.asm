@@ -1,6 +1,6 @@
 
-; lasieve_search0(uchar*, uchar*, uchar*, uchar*,   uchar*,   u16_t*, uchar*);
-; GAS    rax         rdi,     rsi,   rdx,    rcx,       r8,       r9, [rsp+8]
+; lasieve_search0(uchar*, uchar*, uchar*, uchar*,   uchar*,   u16_t*,  uchar*);
+; GAS    rax         rdi,     rsi,   rdx,    rcx,       r8,       r9,  [rsp+8]
 ; YASM   rax         rcx,     rdx,    r8,     r9, [rsp+40], [rsp+48], [rsp+56],
 
 %include "ls-defs.inc"
@@ -15,9 +15,9 @@
         mov     rsi, rdx
         mov     rdx, r8
         mov     rcx, r9
-        mov     r8, qword [rsp+stack_use+40]
-        mov     r9, qword [rsp+stack_use+48]
-        mov     r14, qword [rsp+stack_use+56]
+        mov      r8, [rsp+stack_use+40]
+        mov      r9, [rsp+stack_use+48]
+        mov     r14, [rsp+stack_use+56]
 
         mov     r10, rdi
         lea     r15, [rdi+128]

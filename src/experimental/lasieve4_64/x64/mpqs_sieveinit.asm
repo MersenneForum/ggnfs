@@ -25,8 +25,8 @@
         mov     esi, edx
         mov     rdx, r8
         mov     rcx, r9
-        mov      r8, [rsp+stack_use+40]
-        mov      r9d, [rsp+stack_use+48]
+        mov     r8, [rsp+stack_use+40]
+        mov     r9d, [rsp+stack_use+48]
 
         mov     rbx, rdx
         mov     rcx, [rcx]
@@ -70,8 +70,8 @@
         mov     esi, edx
         mov     rdx, r8
         mov     rcx, r9
-        mov      r8, [rsp+stack_use+40]
-        mov      r9d, [rsp+stack_use+48]
+        mov     r8, [rsp+stack_use+40]
+        mov     r9d, [rsp+stack_use+48]
 
         mov     rbx, rdx
         mov     rcx, [rcx]
