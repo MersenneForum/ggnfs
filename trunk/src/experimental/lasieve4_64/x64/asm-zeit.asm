@@ -16,16 +16,16 @@
         rdtsc   
         shl     rdx, 32
         or      rax, rdx
-        mov     rdx, [rip+asmzeitcounter]
-        sub     [rdx+rdi*8], rax
+        mov     rdx, [rel asmzeitcounter]
+        sub     [rdx+rcx*8], rax
         ret     
         
         LEAF_PROC zeitB
         rdtsc   
         shl     rdx, 32
         or      rax, rdx
-        mov     rdx, [rip+asmzeitcounter]
-        add     [rdx+rdi*8], rax
+        mov     rdx, [rel asmzeitcounter]
+        add     [rdx+rcx*8], rax
         ret     
     
         end

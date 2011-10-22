@@ -28,10 +28,10 @@
 
         FRAME_PROC asm_gauss, 0, reg_save_list
 
-.1:     mov     eax, [rip+mpqs_gauss_k]
+.1:     mov     eax, [rel mpqs_gauss_k]
         dec     eax
         mov     r8d, 1
-        mov     [rip+mpqs_gauss_k], eax
+        mov     [rel mpqs_gauss_k], eax
         jl      .14
         mov     ecx, eax
         and     ecx, 31
@@ -39,31 +39,31 @@
         mov     ecx, eax
         shr     ecx, 5    ; %r11d 
         mov     r11d, ecx      
-        mov     ecx, [rip+mpqs_gauss_j]
+        mov     ecx, [rel mpqs_gauss_j]
         mov     rdi, mpqs_gauss_c
         
-        mov     rsi, [rip+mpqs_gauss_row]
+        mov     rsi, [rel mpqs_gauss_row]
         mov     eax, r11d
-        mov     edx, [rip+mpqs_gauss_n32]
+        mov     edx, [rel mpqs_gauss_n32]
         mov     rsi, [rsi+rcx*8]
         sub     rax, rdx
         dec     ecx
         lea     rsi, [rsi+rax*4]
-        mov     eax, [rip+mpqs_gauss_n32]
+        mov     eax, [rel mpqs_gauss_n32]
         
         align   16
 .2:     inc     ecx
-.3:     cmp     ecx, [rip+mpqs_gauss_m]
+.3:     cmp     ecx, [rel mpqs_gauss_m]
         jnc     .15
         lea     rsi, [rsi+rax*4]
         mov     edx, [rsi]
         and     edx, r8d
         jz      .2        
-.4:     cmp     ecx, [rip+mpqs_gauss_j]
+.4:     cmp     ecx, [rel mpqs_gauss_j]
         jz      .7
-        mov     rsi, [rip+mpqs_gauss_row]
+        mov     rsi, [rel mpqs_gauss_row]
         mov     rax, [rsi+rcx*8]    ; mpqs_gauss_row[j] 
-        mov     edx, [rip+mpqs_gauss_j]
+        mov     edx, [rel mpqs_gauss_j]
         mov     r9, [rsi+rdx*8]    ; mpqs_gauss_row[mpqs_gauss_j] 
         xor     rdx, rdx
 .5:     movq    mm0, [rax+rdx*4]
@@ -71,20 +71,20 @@
         movq    [r9+rdx*4], mm0
         movq    [rax+rdx*4], mm1
         add     rdx, 2
-        cmp     edx, [rip+mpqs_gauss_n32]
+        cmp     edx, [rel mpqs_gauss_n32]
         jc      .5    
-.6:     mov     ecx, [rip+mpqs_gauss_j]
+.6:     mov     ecx, [rel mpqs_gauss_j]
 .7:     mov     rsi, mpqs_gauss_d
-        mov     eax, [rip+mpqs_gauss_k]
+        mov     eax, [rel mpqs_gauss_k]
         mov     [rsi+rax*2], cx
         mov     [rdi+rcx*2], ax
-        inc     dword[rip+mpqs_gauss_j]
+        inc     dword[rel mpqs_gauss_j]
         mov     r10d, ecx
-        mov     rsi, [rip+mpqs_gauss_mat]
+        mov     rsi, [rel mpqs_gauss_mat]
         mov     rdi, mpqs_gauss_col
         mov     edx, r11d
         test    ecx, ecx
-        mov     eax, [rip+mpqs_gauss_n32]
+        mov     eax, [rel mpqs_gauss_n32]
         lea     rsi, [rsi+rdx*4]
         mov     rdx, 2
         jz      .9
@@ -102,7 +102,7 @@
         lea     rsi, [rsi+rax*4]
         jc      .8
 .9:     inc     ecx
-        cmp     ecx, [rip+mpqs_gauss_m]
+        cmp     ecx, [rel mpqs_gauss_m]
         lea     rsi, [rsi+rax*4]
         jnc     .11
         
@@ -114,14 +114,14 @@
         cmovnz  r9, rdx
         inc     rcx
         add     rdi, r9
-        cmp     ecx, [rip+mpqs_gauss_m]
+        cmp     ecx, [rel mpqs_gauss_m]
         lea     rsi, [rsi+rax*4]
         jc      .10
 .11:    mov     r8, mpqs_gauss_col
         cmp     rdi, r8
         jz      .1
         mov     ecx, r10d
-        mov     rsi, [rip+mpqs_gauss_row]
+        mov     rsi, [rel mpqs_gauss_row]
         mov     rsi, [rsi+rcx*8]   
         mov     edx, r11d
         cmp     edx, 2
@@ -133,7 +133,7 @@
 
         align   16
 .12:    movzx   r9, word[r8]
-        mov     rax, [rip+mpqs_gauss_row]
+        mov     rax, [rel mpqs_gauss_row]
         mov     rax, [rax+r9*8]
         xor     ecx, ecx
 .13:    mov     edx, [rsi+rcx*4]
@@ -150,14 +150,14 @@
         EXIT_PROC reg_save_list
         
 .15:    mov     rdi, mpqs_gauss_d
-        mov     eax, [rip+mpqs_gauss_k]
+        mov     eax, [rel mpqs_gauss_k]
         mov     r9w, -1
         mov     [rdi+rax*2], r9w
         mov     r10d, ecx
         jmp     .14        
 .16     movzx   r9, word[r8]
         movq    mm0, [rsi]
-        mov     rsi, [rip+mpqs_gauss_row]
+        mov     rsi, [rel mpqs_gauss_row]
         mov     rax, [rsi+r9*8]
 .17:    movq    mm1, [rax]
         lea     r8, [r8+2]
@@ -171,7 +171,7 @@
 .18:    movq    mm0, [rsi]
         movzx   r9, word[r8]
         movq    mm2, [rsi+8]
-        mov     rsi, [rip+mpqs_gauss_row]
+        mov     rsi, [rel mpqs_gauss_row]
         mov     rax, [rsi+r9*8]
 .19:    movq    mm1, [rax]
         lea     r8, [r8+2]
@@ -189,7 +189,7 @@
         movzx   r9, word[r8]
         movq    mm2, [rsi+8]
         movq    mm4, [rsi+16]
-        mov     rsi, [rip+mpqs_gauss_row]
+        mov     rsi, [rel mpqs_gauss_row]
         mov     rax, [rsi+r9*8]
 .21:    movq    mm1, [rax]
         lea     r8, [r8+2]

@@ -58,10 +58,10 @@
         pxor    xmm5, xmm5
         
         movzx   r9, word[rdi+8]    ; %r9         
-        movzx   rcx, word[rip+mpqs_td_begin]
+        movzx   rcx, word[rel mpqs_td_begin]
         mov     rbx, mpqs_FB_inv_info
         mov     r11, mpqs_FB_start
-        mov     r13w, [rip+mpqs_nFBk_1]
+        mov     r13w, [rel mpqs_nFBk_1]
         add     r13w, 4
         movaps  xmm0, [rbx]
         movaps  xmm1, [rbx+16]
@@ -139,7 +139,7 @@
         jmp     .1
 .2:   
         mov     r10, mpqs_FB
-        movzx   rdx, word[rip+mpqs_nFBk_1]
+        movzx   rdx, word[rel mpqs_nFBk_1]
         add     rdx, rdx
         add     rdx, rdx
         sub     r10, rdx
@@ -163,7 +163,7 @@
         inc     r9
         cmp     r9, 27
         jnc     .16
-        mov     cx, [rip+mpqs_nFBk_1]
+        mov     cx, [rel mpqs_nFBk_1]
         mov     [rdi+r9*2+8], cx
         shr     r8, 1
         jmp     .5  
@@ -195,7 +195,7 @@
         mul     r11d
         mov     r8d, eax
         mov     r11, mpqs_FB_inv
-        movzx   rcx,  word[rip+mpqs_nFBk_1]
+        movzx   rcx,  word[rel mpqs_nFBk_1]
         add     rcx, rcx
         add     rcx, rcx
         sub     r11, rcx
@@ -223,7 +223,7 @@
         jz      .15  
         mov     r11, mpqs_FBk_inv
         mov     r10, mpqs_FBk
-        movzx   rsi, word[rip+mpqs_nFBk]
+        movzx   rsi, word[rel mpqs_nFBk]
         inc     rsi
 .10:    dec     rsi
         mov     eax, r8d
@@ -247,8 +247,8 @@
         jz      .15  
         mov     r11, mpqs_FB_A_inv
         mov     r10, mpqs_Adiv_all
-        mov     r13w, [rip+mpqs_nFB]
-        add     r13w, [rip+mpqs_nFBk]
+        mov     r13w, [rel mpqs_nFB]
+        add     r13w, [rel mpqs_nFBk]
         movzx   rsi, word[mpqs_nAdiv_total]
         inc     rsi
 .13:    dec     rsi
