@@ -17,8 +17,8 @@
 
         FRAME_PROC asm_sieve, 0, reg_save_list 
 
-        movzx   rax, word[rip+mpqs_sievebegin]
-        movzx   r10, word[rip+mpqs_sievelen]
+        movzx   rax, word[rel mpqs_sievebegin]
+        movzx   r10, word[rel mpqs_sievelen]
         mov     rcx, mpqs_FB
         mov     r8, mpqs_FB_start
         mov     r9, mpqs_FB_log
@@ -27,7 +27,7 @@
         lea     r9, [r9+rax]
         mov     r11, r10
         shr     r10, 2
-        mov     r13, [rip+mpqs_sievearray]
+        mov     r13, [rel mpqs_sievearray]
         mov     r15, r13
         add     r15, r11
         
