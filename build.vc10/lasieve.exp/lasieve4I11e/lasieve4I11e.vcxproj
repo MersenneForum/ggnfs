@@ -99,7 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\asm\release\config.h" />
-    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\asm\release\gmp.h" />
+    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\32bit.h" />
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\lasched.h" />
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\medsched.h" />
