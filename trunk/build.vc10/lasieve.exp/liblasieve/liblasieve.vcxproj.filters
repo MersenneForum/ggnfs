@@ -55,7 +55,7 @@
     <ClInclude Include="..\..\unistd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\asm\release\gmp.h">
+    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\x64\release\gmp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
