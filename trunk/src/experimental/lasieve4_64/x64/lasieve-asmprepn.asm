@@ -248,6 +248,9 @@
         movdqa  xmm2, xmm11
         pmuludq xmm11, xmm8
         sub     rsp, 32
+        mov     r8, rdx
+        mov     rdx, rsi
+        mov     rcx, rdi
         call    get_recurrence_info
         add     rsp, 32
         mov     esi, r15d
@@ -256,6 +259,9 @@
         pmuludq xmm11, xmm2
         movdqa  xmm0, xmm8
         sub     rsp, 32
+        mov     r8, rdx
+        mov     rdx, rsi
+        mov     rcx, rdi
         call    get_recurrence_info
         add     rsp, 32
         cmp     r14, r12

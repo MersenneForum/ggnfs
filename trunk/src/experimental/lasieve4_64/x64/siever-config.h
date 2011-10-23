@@ -32,8 +32,14 @@ typedef unsigned u32_t;
 typedef int i32_t;
 typedef short int i16_t;
 typedef unsigned short u16_t;
+#ifdef _WIN32
+typedef unsigned long long u64_t;
+typedef long long i64_t;
+#else
 typedef unsigned long u64_t;
 typedef long int i64_t;
+#endif
+
 #define U32_MAX 0xffffffff
 #define I32_MAX INT_MAX
 
