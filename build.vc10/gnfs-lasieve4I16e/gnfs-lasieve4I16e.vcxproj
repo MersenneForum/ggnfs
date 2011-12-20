@@ -59,22 +59,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PreBuildEvent>
-      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC8(%DATE%)" &gt;..\..\include\version.h)
+      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC10(%DATE%)" &gt;..\..\include\version.h)
 set Wd=..\..\src\lasieve4
 if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)
 call ..\file_copy %Wd%\piii\siever-config.h %Wd%\asm\siever-config.h
@@ -84,7 +84,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;I_bits=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -98,7 +98,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\build.vc10\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)latsieve16.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
@@ -108,12 +108,13 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PreBuildEvent>
-      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC8(%DATE%)" &gt;..\..\include\version.h)
+      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC10(%DATE%)" &gt;..\..\include\version.h)
 set Wd=..\..\src\lasieve4
 if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)
 call ..\file_copy %Wd%\ppc32\siever-config.h %Wd%\asm\siever-config.h
@@ -126,7 +127,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN64;_DEBUG;_CONSOLE;I_bits=16;WIN64;__x86_64__;GGNFS_HOST_GENERIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -140,7 +141,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\build.vc10\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)latsieve16.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
@@ -150,12 +151,13 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PreBuildEvent>
-      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC8(%DATE%)" &gt;..\..\include\version.h)
+      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC10(%DATE%)" &gt;..\..\include\version.h)
 set Wd=..\..\src\lasieve4
 if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)
 call ..\file_copy %Wd%\piii\siever-config.h %Wd%\asm\siever-config.h
@@ -168,7 +170,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;I_bits=16;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -181,7 +183,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\build.vc10\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -192,12 +194,13 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEvent>
-      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC8(%DATE%)" &gt;..\..\include\version.h)
+      <Command>if not exist ..\..\include\version.h (echo #define GGNFS_VERSION "0.77.1-VC10(%DATE%)" &gt;..\..\include\version.h)
 set Wd=..\..\src\lasieve4
 if not exist %Wd%\asm (echo creating %Wd%\asm &amp;&amp; md %Wd%\asm)
 call ..\file_copy %Wd%\ppc32\siever-config.h %Wd%\asm\siever-config.h
@@ -210,7 +213,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
     <ClCompile>
       <Optimization>Full</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN64;NDEBUG;_CONSOLE;I_bits=16;WIN64;__x86_64__;GGNFS_HOST_GENERIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -223,7 +226,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\build.vc10\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;..\..\..\mpir\lib\$(IntDir)\mpir.lib</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -234,7 +237,8 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

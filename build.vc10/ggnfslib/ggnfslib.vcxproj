@@ -61,10 +61,12 @@
     <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\lib\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\lib\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\lib\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PreBuildEvent>
@@ -78,7 +80,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -92,7 +94,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>..\..\..\mpir\build.vc10\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\mpir\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
       <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
@@ -113,7 +115,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN64;_DEBUG;_LIB;WIN64;__x86_64__;GGNFS_HOST_GENERIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -127,7 +129,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>..\..\..\mpir\build.vc10\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\mpir\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
       <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
@@ -145,7 +147,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
     <ClCompile>
       <Optimization>Full</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -158,7 +160,7 @@ if exist %Wd%\asm\32bit.h (echo deleting %Wd%\asm\32bit.h &amp;&amp; del %Wd%\as
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>..\..\..\mpir\build.vc10\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\mpir\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
       <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
@@ -179,7 +181,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
     <ClCompile>
       <Optimization>Full</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\build.vc10\lib\$(IntDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\;..\..\include;..\..\src;..\..\..\mpir\lib\$(IntDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN64;NDEBUG;_LIB;WIN64;__x86_64__;GGNFS_HOST_GENERIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -192,7 +194,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Lib>
-      <AdditionalDependencies>..\..\..\mpir\build.vc10\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\mpir\lib\$(IntDir)mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
       <Command>..\run.bat "$(TargetDir)$(TargetFileName)" ..\..\bin\$(IntDir)</Command>
