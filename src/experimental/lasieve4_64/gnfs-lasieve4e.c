@@ -3992,11 +3992,13 @@ output_tdsurvivor(fbp_buf0,fbp_buf0_ub,fbp_buf1,fbp_buf1_ub,lf0,lf1)
       if(mpz_sgn(large_primes[s1][1]) == 0) { /* remainder == 0? */
 	mpz_set(large_primes[s1][1],large_primes[s1][0]);
 	nlp[s1]= 2;
+#if 0 /* this is now tested well enough, no need for a message */
 	if(verbose > 1) {
 	  fprintf(stderr," mpqs on a prime square ");
 	  mpz_out_str(stderr,10,large_primes[s1][0]);
 	  fprintf(stderr,"^2  ");
 	}
+#endif
 	continue;
       }
       if(verbose > 1) {
