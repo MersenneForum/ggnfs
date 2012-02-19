@@ -1425,12 +1425,14 @@ int main(int argc, char **argv)
 	    }
 	  
 	  else{
+#if 0
 	    char *cmd;
 
 	    asprintf(&cmd,"touch badsched.%s.%u.%u.%u",base_name,
 	             special_q_side,special_q,r[root_no]);
 	    system(cmd);
 	    free(cmd);
+#endif
 	    continue;
 	  }
 	}
