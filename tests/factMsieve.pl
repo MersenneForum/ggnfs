@@ -51,6 +51,8 @@ use Math::BigFloat;
 # Bah, this causes a fatal error if GMP BigInt is not available.
 # use Math::BigInt lib => 'GMP';
 
+$GZIPDAT = 0;                 # keep the .dat file plain   --OR--
+# $GZIPDAT = 1;			# keep the .dat file gzipped
 $NUM_CPUS=1;
 $NUM_THREADS=$NUM_CPUS;
 
@@ -322,9 +324,11 @@ sub linecount {
 ###########################################################
 # Count the number of lines in the DATFILE
 ###########################################################
-  my $count = 0;
-  open(FILE, "< $DATNAME") or die "can't open $DATNAME: $!";
+  my $count = -1;
+  # open(FILE, "< $DATNAME") or die "can't open $DATNAME: $!";
+  open(FILE, "\"$GZIP\" -dfcq $DATNAME |") or die "can't open $DATNAME: $!";
   $count++ while <FILE>;
+  close FILE;
   return $count;
 }
 
@@ -1379,7 +1383,9 @@ sub setup {
       print OF "$N\n";
       close(OF);
 
-      open(OF, ">$DATNAME");
+      # die if -e $DATNAME;  # if you don't want to overwrite!
+
+      open(OF, $GZIPDAT?"|\"$GZIP\">$DATNAME":">$DATNAME");
       print OF "N $N\n";
       close(OF);
 
@@ -1705,9 +1711,15 @@ while (!(-e $COLS)) {
       $MINRELS=$1 if($1);
       close IN;
     }
-    $cmd="\"$CAT\" spairs.out >> $DATNAME";
-    print "=>$cmd\n" if($ECHO_CMDLINE);
-    concat("spairs.out", ">>", "$DATNAME");
+    if($GZIPDAT) {
+	$cmd="\"$GZIP\" -5 -c spairs.out >> $DATNAME";
+	print "=>$cmd\n" if($ECHO_CMDLINE);
+	system($cmd);
+    } else {
+	$cmd="\"$CAT\" spairs.out >> $DATNAME";
+	print "=>$cmd\n" if($ECHO_CMDLINE);
+	concat("spairs.out", ">>", "$DATNAME");
+    }
     $CURR_RELS = linecount;
     print "Found $CURR_RELS relations, need at least $MINRELS to proceed.\n";
     if ($CURR_RELS > $MINRELS) {
