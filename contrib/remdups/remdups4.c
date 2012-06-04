@@ -4,6 +4,7 @@
       only syntax (a,b:<csv-of-factors>:<csv-of-factors>) is checked and incomplete lines are discarded;
       validity of relations is not tested (nor is polynomial needed).
   Hashing of (a,b) values was changed to accomodate for gnfs projects with huge skews (S.Batalov).
+  Verbose mode was added (Lionel Debroux)
 
   This version is a filter (stdin, stdout):
     you may redirect stdout to /dev/null and/or
@@ -24,17 +25,20 @@
   02111-1307, USA.
 */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef unsigned long uint32;
 typedef long int32;
 typedef unsigned long long uint64;
 
-#define MDVAL 327673
+#define MDVAL (327673)
+#define REPORT_EVERY_N_UNIQUE_RELS (500000)
 
-int strccnt(const char *s, int c)
+static int strccnt(const char *s, int c)
 {
 	const unsigned char *us = (const unsigned char *) s;
 	const unsigned char uc = c;
@@ -48,16 +52,27 @@ int main(int argc, char **argv) {
         int mm,nn,av;
 	FILE *badfile;
 	uint64 ** arra;
-        int n[MDVAL]={0};
-	int numbad=0, numdups=0, numuniq=0,numskip=0;
+	int n[MDVAL]={0};
+	unsigned int numbad=0, numdups=0, numuniq=0, numskip=0, prevnumdups=0;
 	int DIM=1000;
+	time_t curtime;
+	long allocated=0;
+	int verbose = 0;
 
-        if (argc == 2) {
-	  DIM=atoi(argv[1]); 
-        } else {
-	  fprintf(stderr,"\nusage: cat relations.file(s) | %s DIM > out_file \n"
-		  "\t DIM is a number (5 per million relations recommended)\n\n", argv[0]);
-	  exit(-1);
+	if (argc >= 2) {
+		if (!strcmp("-h", argv[1]) || !strcmp("--help", argv[1]))
+			goto usage;
+
+		DIM=atoi(argv[1]);
+		if (argc >= 3) {
+			if (!strcmp("-v", argv[2]) || !strcmp("--verbose", argv[2]))
+				verbose = 1;
+		}
+	} else {
+usage:
+		fprintf(stderr,"\nusage: cat relations.file(s) | %s DIM [-v/--verbose] > out_file \n"
+		               "\t DIM is a number (5 per million relations recommended)\n\n", argv[0]);
+		exit(-1);
 	}
 
 	badfile = fopen("badrels.txt", "a");
@@ -72,27 +87,42 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 #endif
+	if (verbose) {
+		curtime = time(NULL);
+		fprintf(stderr, "Starting program at %s", ctime(&curtime));
+	}
 
 	/* initialize arrays */
 	arra = (uint64**)malloc(MDVAL * sizeof(uint64 *));
-	for(mm = 0; mm < MDVAL; mm++){
+	if(!arra) {
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	if (verbose) {
+		fprintf(stderr, "allocated %ld bytes for pointers\n", MDVAL * sizeof(uint64 *));
+	}
+	for(mm = 0; mm < MDVAL; mm++) {
 #define CHUNK 2048
-	  if((mm % CHUNK) == 0) {
-	    arra[mm] = (uint64*)malloc(CHUNK * DIM * sizeof(uint64));
-	    if(!arra[mm]) {
-	      fprintf(stderr, "out of memory\n");
-	      exit(1);
-	    }
-	    /* memset(arra[mm],0,CHUNK * DIM * sizeof(uint64)); */  /* unnecessary */
-	  } else {
-	    arra[mm] = arra[mm-1] + DIM;
-	  }
+		if((mm % CHUNK) == 0) {
+			arra[mm] = (uint64*)malloc(CHUNK * DIM * sizeof(uint64));
+			if(!arra[mm]) {
+				fprintf(stderr, "out of memory\n");
+				exit(1);
+			}
+			allocated += CHUNK * DIM * sizeof(uint64);
+			/* memset(arra[mm],0,CHUNK * DIM * sizeof(uint64)); */  /* unnecessary */
+		} else {
+			arra[mm] = arra[mm-1] + DIM;
+		}
+	}
+	if (verbose) {
+		fprintf(stderr, "allocated %ld bytes for arrays\n", allocated);
 	}
 
 	while (fgets(buf, sizeof(buf), stdin)) {
-		char *tmp, *field_end;
+		char *tmp;
 		uint64 a;
-		int32 i, j, p, cpos;
+		int32 i, p, cpos;
 
 		if (buf[0] == '#') {
 			printf("%s", buf);
@@ -131,20 +161,44 @@ int main(int argc, char **argv) {
 		if (n[p]<DIM) arra[p][n[p]++]=a; /* Not quitting after a whole lot of work! Just stop extending the bin --SB. */
 		else numskip++;
 		numuniq++;
-		if(numuniq % 500000 == 0)
-			fprintf(stderr,"\r %.1fM relns \r", numuniq/1000000.0);
+		if(numuniq % REPORT_EVERY_N_UNIQUE_RELS == 0) {
+			if (!verbose) {
+				fprintf(stderr,"\r %.1fM relns \r", numuniq/1000000.0);
+			} else {
+				char buf2[32];
+				curtime = time(NULL);
+
+				strcpy(buf2, ctime(&curtime));
+				*(strchr(buf2, '\n')) = 0;
+				fprintf(stderr, "%s  %.1fM unique relns  %.2fM duplicate relns (+%.2fM, avg D/U ratio in block was %.1f%%)\n",
+					buf2,
+					numuniq/1000000.0,
+					numdups/1000000.0,
+					(numdups - prevnumdups)/1000000.0,
+					100.0*(numdups - prevnumdups)/(REPORT_EVERY_N_UNIQUE_RELS + numdups - prevnumdups));
+				prevnumdups = numdups;
+			}
+		}
 		for(tmp=buf;*tmp;tmp++) *tmp=tolower(*tmp); /* will compress better */
 		printf("%s", buf);
 	skip_:  ;
 	}
-		
-        fprintf(stderr,"Found %d unique, %d duplicate, and %d bad relations.\n",numuniq, numdups, numbad);
+
+	if (!verbose) {
+		fprintf(stderr,"Found %d unique, %d duplicate, and %d bad relations.\n",numuniq, numdups, numbad);
+	} else {
+		fprintf(stderr,"Found %u unique, %u duplicate (%.1f%% of total), and %u bad relations.\n", numuniq, numdups, 100.0*numdups/(numuniq+numdups), numbad);
+	}
 	for (av=0,mm=1,nn=n[0];mm<MDVAL;mm++) {if (n[mm]>nn) nn=n[mm]; av+=n[mm];}
 	fprintf(stderr,"Largest dimension used: %d of %d\n",nn,DIM);
 	fprintf(stderr,"Average dimension used: %.1f of %d\n",((double)av)/MDVAL,DIM);
 	if(nn>=DIM) fprintf(stderr,"*** Some redundant relations may have been retained (increase DIM)\n");
-	if(numskip) fprintf(stderr,"*** %d (quasi-unique) relations were not hashed\n",numskip);
+	if(numskip) fprintf(stderr,"*** %u (quasi-unique) relations were not hashed\n",numskip);
 	if(numbad) fprintf(badfile, "\n");	/* usually last reln line is truncated and ends up in the bad bin. We don't want them to stick together */
 	fclose(badfile);
+	if (verbose) {
+		curtime = time(NULL);
+		fprintf(stderr, "Terminating program at %s", ctime(&curtime));
+	}
 	return 0;
 }
