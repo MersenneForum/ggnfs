@@ -4032,7 +4032,8 @@ output_tdsurvivor(fbp_buf0,fbp_buf0_ub,fbp_buf1,fbp_buf1_ub,lf0,lf1)
   fprintf(g_ofile, ",");
   mpz_out_str(g_ofile, 10, sr_b);
   
-#define OBASE 16
+#define OBASE -16
+  /* -16 means "use upper-case" hex in gmplib >= 4.0 */
   for(s= 0;s<2;s++) {
     int num = 0;
     u32_t *x = fbp_buffers_ub[1-s];
@@ -4046,7 +4047,7 @@ output_tdsurvivor(fbp_buf0,fbp_buf0_ub,fbp_buf1,fbp_buf1_ub,lf0,lf1)
     while (x-- != fbp_buffers[1-s]) {
       if ((unsigned int)*x <1000) continue;
       if (num>0) fprintf(g_ofile, ",");
-      fprintf(g_ofile, "%x", (unsigned int)*x);
+      fprintf(g_ofile, "%X", (unsigned int)*x);
       num++;
     }
   }
