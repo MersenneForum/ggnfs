@@ -2730,8 +2730,10 @@ int main(int argc, char **argv)
       if (tNow > lastReport + 5.0) {
 	lastReport = tNow;
         if(verbose) {
-	  fprintf(stderr, "\rtotal yield: %u, q=%u (%1.5lf sec/rel) ", 
-		(unsigned int)yield, (unsigned int)special_q, (tNow - tStart)/yield);
+          int eta = (int)(((double)last_spq - special_q)*(tNow - tStart)/((double)special_q - first_spq+1)/60);
+	  fprintf(stderr, "\rtotal yield: %u, q=%u (%1.5lf sec/rel; ETA %dh%02dm)  ", 
+		(unsigned int)yield, (unsigned int)special_q, (tNow - tStart)/yield,
+                eta/60, eta%60);
 	  fflush(stderr);
         }
       }
