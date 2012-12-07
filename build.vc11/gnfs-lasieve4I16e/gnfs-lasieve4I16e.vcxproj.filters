@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{b5656e5e-fb9f-4939-b3fb-e86bce51eb5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{38401e8c-4642-4e10-ace2-5d46a50d3602}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assembler Files">
+      <UniqueIdentifier>{999e4628-6d65-45ac-8756-a0bf6caeaa3b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\lasieve4\piii\siever-config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\piii\basemath.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\ppc32\gcd32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\piii\gcd32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\gmp-aux.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\gnfs-lasieve4e.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\input-poly.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\ppc32\lasched.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\piii\lasched.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\lasieve-prepn.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\ppc32\medsched.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\piii\medsched.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\ppc32\modinv32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\piii\montgomery_mul.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\mpqs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\prho.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\primgen32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\ppc32\psp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\piii\psp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\real-poly-aux.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\recurrence6.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lasieve4\redu2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\if.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\generic\32bit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\lasieve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\piii\siever-config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\ppc32\32bit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\asm\32bit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\fnmatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\getopt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ggnfs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\if.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\ppc32\siever-config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\lasieve4\asm\siever-config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\mpir\lib\x64\release\gmp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <YASM Include="..\..\src\lasieve4\piii\asm_mul128.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\asm_mul64.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\asm_mul96.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\modinv1002.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\mpqs_eval.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\mpqs_sieve.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\mpqs_td.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\sieve-from-sched.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+    <YASM Include="..\..\src\lasieve4\piii\ri-aux.asm">
+      <Filter>Assembler Files</Filter>
+    </YASM>
+  </ItemGroup>
+</Project>

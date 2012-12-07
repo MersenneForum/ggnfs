@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\lasched0.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\lasched1.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\medsched0.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\search0.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinie1A.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinie2A.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinie3A.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinieG.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie1.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie2.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie3.asm">
+      <Filter>Source Files</Filter>
+    </YASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\experimental\lasieve4_64\x64\lasched.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\experimental\lasieve4_64\x64\medsched.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\mpir\lib\x64\release\mpir.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\if.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\lasched.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\medsched.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\siever-config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
