@@ -20,12 +20,14 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -55,7 +57,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;n_i_bits=11;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\..\mpir\build.vc10\lib\$(IntDir);..\..\;..\..\..\src\experimental\lasieve4_64\x64</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\..\mpir\lib\$(IntDir);..\..\;..\..\..\src\experimental\lasieve4_64\x64</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -72,7 +74,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;n_i_bits=11;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\src\experimental\lasieve4_64\asm;..\..\..\..\mpir\build.vc10\lib\$(IntDir);..\..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\src\experimental\lasieve4_64\asm;..\..\..\..\mpir\lib\$(IntDir);..\..\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -80,7 +82,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>..\..\..\..\mpir\build.vc10\lib\$(IntDir)\mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\..\..\mpir\lib\$(IntDir)\mpir.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -149,7 +151,7 @@
     <ClCompile Include="..\..\..\src\experimental\lasieve4_64\asm\zeit.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\..\..\mpir\lib\x64\release\gmp.h" />
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\32bit.h" />
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\if.h" />
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\siever-config.h" />

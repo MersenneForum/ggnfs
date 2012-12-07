@@ -69,7 +69,7 @@
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\siever-config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\asm\release\mpir.h">
+    <ClInclude Include="..\..\..\..\mpir\lib\x64\release\mpir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

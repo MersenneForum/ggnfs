@@ -215,7 +215,7 @@
     <ClCompile Include="..\..\src\experimental\pol5\stage1\struct.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\..\mpir\lib\x64\release\gmp.h" />
     <ClInclude Include="..\..\include\ggnfs.h" />
     <ClInclude Include="..\..\include\version.h" />
     <ClInclude Include="..\..\src\if.h" />
