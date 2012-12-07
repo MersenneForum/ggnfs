@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "liblasieve", "liblasieve\liblasieve.vcxproj", "{6AEFD47C-FC47-4F43-A7B2-408C5E45A6D2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "liblasieveI11", "liblasieveI11\liblasieveI11.vcxproj", "{BAF749BD-63E0-437A-B229-6B5A3F570E6A}"
@@ -59,30 +59,43 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{6AEFD47C-FC47-4F43-A7B2-408C5E45A6D2}.Debug|x64.ActiveCfg = Debug|x64
 		{6AEFD47C-FC47-4F43-A7B2-408C5E45A6D2}.Release|x64.ActiveCfg = Release|x64
+		{6AEFD47C-FC47-4F43-A7B2-408C5E45A6D2}.Release|x64.Build.0 = Release|x64
 		{BAF749BD-63E0-437A-B229-6B5A3F570E6A}.Debug|x64.ActiveCfg = Debug|x64
 		{BAF749BD-63E0-437A-B229-6B5A3F570E6A}.Release|x64.ActiveCfg = Release|x64
+		{BAF749BD-63E0-437A-B229-6B5A3F570E6A}.Release|x64.Build.0 = Release|x64
 		{451C3388-7276-48A1-A336-B2C4DE3C588A}.Debug|x64.ActiveCfg = Debug|x64
 		{451C3388-7276-48A1-A336-B2C4DE3C588A}.Release|x64.ActiveCfg = Release|x64
+		{451C3388-7276-48A1-A336-B2C4DE3C588A}.Release|x64.Build.0 = Release|x64
 		{ECDAC80B-B64E-4B85-AD65-1B9CE8EDB501}.Debug|x64.ActiveCfg = Debug|x64
 		{ECDAC80B-B64E-4B85-AD65-1B9CE8EDB501}.Release|x64.ActiveCfg = Release|x64
+		{ECDAC80B-B64E-4B85-AD65-1B9CE8EDB501}.Release|x64.Build.0 = Release|x64
 		{9796AF90-3B2F-470F-BDFA-C8AA336594B8}.Debug|x64.ActiveCfg = Debug|x64
 		{9796AF90-3B2F-470F-BDFA-C8AA336594B8}.Release|x64.ActiveCfg = Release|x64
+		{9796AF90-3B2F-470F-BDFA-C8AA336594B8}.Release|x64.Build.0 = Release|x64
 		{36E21BAD-4C26-4C28-9829-2DA09A411FFB}.Debug|x64.ActiveCfg = Debug|x64
 		{36E21BAD-4C26-4C28-9829-2DA09A411FFB}.Release|x64.ActiveCfg = Release|x64
+		{36E21BAD-4C26-4C28-9829-2DA09A411FFB}.Release|x64.Build.0 = Release|x64
 		{0E6599B1-F8AD-4997-80C9-4E0213E7B326}.Debug|x64.ActiveCfg = Debug|x64
 		{0E6599B1-F8AD-4997-80C9-4E0213E7B326}.Release|x64.ActiveCfg = Release|x64
+		{0E6599B1-F8AD-4997-80C9-4E0213E7B326}.Release|x64.Build.0 = Release|x64
 		{C215C705-0613-4E32-ABCA-645EC7A0EF9B}.Debug|x64.ActiveCfg = Debug|x64
 		{C215C705-0613-4E32-ABCA-645EC7A0EF9B}.Release|x64.ActiveCfg = Release|x64
+		{C215C705-0613-4E32-ABCA-645EC7A0EF9B}.Release|x64.Build.0 = Release|x64
 		{BBCFB293-3606-4549-9176-0AF516F84BAC}.Debug|x64.ActiveCfg = Debug|x64
 		{BBCFB293-3606-4549-9176-0AF516F84BAC}.Release|x64.ActiveCfg = Release|x64
+		{BBCFB293-3606-4549-9176-0AF516F84BAC}.Release|x64.Build.0 = Release|x64
 		{DD4C5F19-1F05-494B-8F12-C4A70444293C}.Debug|x64.ActiveCfg = Debug|x64
 		{DD4C5F19-1F05-494B-8F12-C4A70444293C}.Release|x64.ActiveCfg = Release|x64
+		{DD4C5F19-1F05-494B-8F12-C4A70444293C}.Release|x64.Build.0 = Release|x64
 		{BA608E82-06A5-46C5-B0E2-60ED71F38DC4}.Debug|x64.ActiveCfg = Debug|x64
 		{BA608E82-06A5-46C5-B0E2-60ED71F38DC4}.Release|x64.ActiveCfg = Release|x64
+		{BA608E82-06A5-46C5-B0E2-60ED71F38DC4}.Release|x64.Build.0 = Release|x64
 		{379879A2-FB3D-4A0E-B3FD-94EFE9D035EE}.Debug|x64.ActiveCfg = Debug|x64
 		{379879A2-FB3D-4A0E-B3FD-94EFE9D035EE}.Release|x64.ActiveCfg = Release|x64
+		{379879A2-FB3D-4A0E-B3FD-94EFE9D035EE}.Release|x64.Build.0 = Release|x64
 		{3E382630-1512-4975-B165-1CC2F6E0F407}.Debug|x64.ActiveCfg = Debug|x64
 		{3E382630-1512-4975-B165-1CC2F6E0F407}.Release|x64.ActiveCfg = Release|x64
+		{3E382630-1512-4975-B165-1CC2F6E0F407}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
