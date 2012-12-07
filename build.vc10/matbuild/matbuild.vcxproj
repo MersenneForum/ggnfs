@@ -223,7 +223,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\..\..\program files (x86)\microsoft visual studio 10.0\vc\include\limits.h" />
-    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\..\mpir\lib\x64\release\gmp.h" />
     <ClInclude Include="..\..\include\ggnfs.h" />
     <ClInclude Include="..\..\include\prand.h" />
     <ClInclude Include="..\..\include\version.h" />

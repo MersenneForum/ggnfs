@@ -338,7 +338,7 @@ call ..\file_copy %Wd%\ppc32\32bit.h %Wd%\asm\32bit.h
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\mpir\build.vc10\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\..\mpir\lib\x64\release\gmp.h" />
     <ClInclude Include="..\..\include\ggnfs.h" />
     <ClInclude Include="..\..\include\version.h" />
     <ClInclude Include="..\..\src\if.h" />
