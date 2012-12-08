@@ -61,12 +61,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\32bit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\x64\release\config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\fbgen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -82,16 +76,7 @@
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\gmp-aux.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\mpir\build.vc10\lib\x64\release\gmp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\lasched.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\lasieve-prepn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\medsched.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\primgen32.h">
@@ -106,10 +91,25 @@
     <ClInclude Include="..\..\..\src\experimental\lasieve4_64\redu2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\siever-config.h">
+    <ClInclude Include="..\..\unistd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\unistd.h">
+    <ClInclude Include="..\..\..\..\mpir\lib\x64\release\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\mpir\lib\x64\release\gmp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\32bit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\lasched.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\medsched.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\siever-config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
