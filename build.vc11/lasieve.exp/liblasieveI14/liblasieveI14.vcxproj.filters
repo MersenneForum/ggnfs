@@ -11,48 +11,48 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\lasched0.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\lasched0.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\lasched1.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\lasched1.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\medsched0.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\medsched0.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\search0.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\search0.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinie1A.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\slinie1A.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinie2A.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\slinie2A.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinie3A.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\slinie3A.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\slinieG.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\slinieG.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\tdslinie.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie1.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\tdslinie1.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie2.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\tdslinie2.asm">
       <Filter>Source Files</Filter>
     </YASM>
-    <YASM Include="..\..\..\src\experimental\lasieve4_64\x64\tdslinie3.asm">
+    <YASM Include="..\..\..\src\experimental\lasieve4_64\asm\tdslinie3.asm">
       <Filter>Source Files</Filter>
     </YASM>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\experimental\lasieve4_64\x64\lasched.c">
+    <ClCompile Include="..\..\..\src\experimental\lasieve4_64\asm\lasched.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\experimental\lasieve4_64\x64\medsched.c">
+    <ClCompile Include="..\..\..\src\experimental\lasieve4_64\asm\medsched.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -60,16 +60,16 @@
     <ClInclude Include="..\..\..\..\mpir\lib\x64\release\mpir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\if.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\if.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\lasched.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\lasched.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\medsched.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\medsched.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\siever-config.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\siever-config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

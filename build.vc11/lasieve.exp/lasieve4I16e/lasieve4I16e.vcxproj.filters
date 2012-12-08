@@ -100,16 +100,16 @@
     <ClInclude Include="..\..\..\..\mpir\lib\x64\release\gmp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\32bit.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\32bit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\lasched.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\lasched.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\medsched.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\medsched.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\x64\siever-config.h">
+    <ClInclude Include="..\..\..\src\experimental\lasieve4_64\asm\siever-config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
