@@ -117,6 +117,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\mpir\lib\x64\release\gmp.h" />
+    <ClInclude Include="..\..\src\lasieve4\generic\32bit.h" />
+    <ClInclude Include="..\..\if.h" />
   </ItemGroup>
   <ItemGroup>
     <YASM Include="..\..\src\lasieve4\piii\asm_mul128.asm">
