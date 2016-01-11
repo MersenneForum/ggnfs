@@ -1798,7 +1798,7 @@ while (<INFO>) {
   if (/unique relations/) { $rels=$_[9]." ".$_[11]; }
 #  if (/Initial matrix/) { s/\[.*\] Initial matrix is //; $initmat=$_; }
   if (/matrix is/) { $prunedmat=$_[7]." x ".$_[9]; }
-  if (/prp/) {
+  if (/p\d+ factor:/) { # newer Msieve outputs, e.g. "p50", not "prp50"
     s/.*factor: //;
     if ((length($_) > 1) && (length($_) < length($N))) {
       push(@DIVISORS, $_);
