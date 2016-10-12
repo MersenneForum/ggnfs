@@ -10,6 +10,7 @@ dnl Now, the registers which we are going to use
 define(sieve_ptr,%r8)dnl
 define(sieve_ptr_ub,%r9)dnl
 define(root,%r10)dnl
+define(rootw,%r10w)dnl
 define(prime,%r11)dnl
 define(prime32,%r11d)dnl
 define(sv0,%al)dnl
@@ -115,7 +116,7 @@ tdslinie_tloop`'i`'d:
 tdslinie_next_j`'i:
 ')
 	cmpq aux_ptr,aux_ptr_ub
-	movw root,root_src
+	movw rootw,root_src
 	leaq 8(aux_ptr),aux_ptr
 	ja tdslinie_fbi_loop
 tdslinie_ende:

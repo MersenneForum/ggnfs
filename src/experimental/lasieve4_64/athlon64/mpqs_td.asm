@@ -290,7 +290,7 @@ divloop:
 	mull %ecx
 	testl %edx,%edx
 	jnz tdloop
-	cmpw $27,nr
+	cmpw $27,nrw
 	jnc gotonext
 	movl aux4d,%eax
 	movw aux5w,10(relptr,nr,2)
@@ -321,10 +321,10 @@ divloopk:
 	mull %ecx
 	testl %edx,%edx
 	jnz tdloopk
-	cmpw $27,nr
+	cmpw $27,nrw
 	jnc gotonext
 	movl aux4d,%eax
-	movw nr1,10(relptr,nr,2)
+	movw nr1w,10(relptr,nr,2)
 	incq nr
 	movl aux4d,qxd
 	jmp divloopk
@@ -354,7 +354,7 @@ divloopa:
 	testl %edx,%edx
 	jnz tdloopa
 	movl aux4d,%eax
-	cmpw $27,nr
+	cmpw $27,nrw
 	jnc gotonext
 	addw nr1w,aux5w
 	movw aux5w,10(relptr,nr,2)
